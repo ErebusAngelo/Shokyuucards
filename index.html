@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tarjetas de Vocabulario - Shokyuu 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Vocabulario - Shokyuu 1</h1>
+      <div class="controls">
+        <label for="unidadSelect">Unidad:</label>
+        <select id="unidadSelect"></select>
+        <button id="btnStart">Comenzar</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="board" class="hidden">
+        <div class="progress"><span id="progressText"></span></div>
+
+        <div id="card" class="card">
+          <div class="front" id="cardFront"></div>
+          <div class="back hidden" id="cardBack"></div>
+          <button id="playAudio" class="audio-btn">🔊</button>
+        </div>
+
+        <div class="actions">
+          <button id="btnNotGot" class="btn negative">No lo recordé</button>
+          <button id="btnGot" class="btn positive">Lo recordé</button>
+        </div>
+      </section>
+
+      <section id="result" class="hidden results">
+        <h2>Resultado</h2>
+        <p id="resultText"></p>
+        <button id="btnRestart" class="btn">Volver</button>
+      </section>
+    </main>
+
+    <footer>
+      <small>Vocabulario Shokyuu 1</small>
+    </footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
