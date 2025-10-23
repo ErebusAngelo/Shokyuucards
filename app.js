@@ -21,6 +21,8 @@ const panelLessons = document.getElementById("panelLessons");
 const panelReview = document.getElementById("panelReview");
 const showRomajiCheckbox = document.getElementById("showRomaji");
 const shuffleCardsCheckbox = document.getElementById("shuffleCards");
+const includeOptionalCheckbox = document.getElementById("includeOptional");
+const includeOptionalReviewCheckbox = document.getElementById("includeOptionalReview");
 
 let currentDeck = [];
 let index = 0;
@@ -31,6 +33,7 @@ let currentUnit = "";
 let wrongWords = []; // Palabras incorrectas en la sesión actual
 let showRomaji = true; // Estado del toggle de romaji
 let shuffleCards = false; // Estado del toggle de mezclar tarjetas
+let includeOptional = false; // Estado del toggle de palabras opcionales
 
 function populateUnits() {
   // Limpiar opciones existentes
@@ -68,6 +71,8 @@ function startDeck() {
       return;
     }
     currentDeck = [...reviewDecks[currentUnit]];
+    // Obtener estado de palabras opcionales para repaso
+    includeOptional = includeOptionalReviewCheckbox.checked;
   } else {
     isReviewMode = false;
     currentUnit = unidadSelect.value;
@@ -76,6 +81,13 @@ function startDeck() {
       return;
     }
     currentDeck = [...vocabulario[currentUnit]];
+    // Obtener estado de palabras opcionales para lecciones
+    includeOptional = includeOptionalCheckbox.checked;
+  }
+  
+  // Filtrar palabras opcionales si no están incluidas
+  if (!includeOptional) {
+    currentDeck = currentDeck.filter(word => !word.optional);
   }
   
   // Aplicar mezcla si está activada
@@ -262,6 +274,15 @@ showRomajiCheckbox.addEventListener('change', (e) => {
 
 shuffleCardsCheckbox.addEventListener('change', (e) => {
   shuffleCards = e.target.checked;
+});
+
+// Event listeners para palabras opcionales
+includeOptionalCheckbox.addEventListener('change', (e) => {
+  includeOptional = e.target.checked;
+});
+
+includeOptionalReviewCheckbox.addEventListener('change', (e) => {
+  includeOptional = e.target.checked;
 });
 
 // ===== CAMBIAR LECCIÓN =====

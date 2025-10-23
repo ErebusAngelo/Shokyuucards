@@ -35,7 +35,27 @@ const vocabulario = {
     { jp: "どうぞよろしく", romaji: "douzo yoroshiku", es: "encantado/a, mucho gusto" },
     { jp: "こちらは〜さんです", romaji: "kochira wa ~san desu", es: "Le presento al Sr./Sra./Srta. ~" },
     { jp: "〜からきました", romaji: "~kara kimashita", es: "Soy de ~ / Vengo de ~" },
-    { jp: "アメリカ", romaji: "amerika", es: "EE. UU." },
+    // Palabras opcionales - países y lugares
+    { jp: "アメリカ", romaji: "amerika", es: "EE. UU.", optional: true },
+    { jp: "イギリス", romaji: "igirisu", es: "Reino Unido", optional: true },
+    { jp: "インド", romaji: "indo", es: "India", optional: true },
+    { jp: "インドネシア", romaji: "indoneshia", es: "Indonesia", optional: true },
+    { jp: "かんこく", romaji: "kankoku", es: "Corea del Sur", optional: true },
+    { jp: "タイ", romaji: "tai", es: "Tailandia", optional: true },
+    { jp: "ちゅうごく", romaji: "chuugoku", es: "China", optional: true },
+    { jp: "ドイツ", romaji: "doitsu", es: "Alemania", optional: true },
+    { jp: "にほん", romaji: "nihon", es: "Japón", optional: true },
+    { jp: "フランス", romaji: "furansu", es: "Francia", optional: true },
+    { jp: "ブラジル", romaji: "burajiru", es: "Brasil", optional: true },
+    // Palabras opcionales - universidades ficticias
+    { jp: "さくら大学", romaji: "sakura daigaku", es: "universidades ficticias", optional: true },
+    { jp: "富士大学", romaji: "fuji daigaku", es: "universidades ficticias", optional: true },
+    // Palabras opcionales - empresas ficticias
+    { jp: "IMC", romaji: "IMC", es: "empresas ficticias", optional: true },
+    { jp: "パワー電気", romaji: "pawaa denki", es: "empresas ficticias", optional: true },
+    { jp: "ブラジルエアー", romaji: "burajiru eaa", es: "empresas ficticias", optional: true },
+    { jp: "AKC", romaji: "AKC", es: "institución ficticia", optional: true },
+    { jp: "神戸病院", romaji: "koube byouin", es: "hospital ficticio", optional: true }
 
   ],
   "Lección 2": [
