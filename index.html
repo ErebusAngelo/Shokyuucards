@@ -10,16 +10,74 @@
   <div class="app">
     <header>
       <h1>Vocabulario - Shokyuu 1</h1>
-      <div class="controls">
-        <label for="unidadSelect">Unidad:</label>
-        <select id="unidadSelect"></select>
+      
+      <!-- Tabs para lecciones regulares y repaso -->
+      <div class="tabs">
+        <button id="tabLessons" class="tab-btn active">Lecciones</button>
+        <button id="tabReview" class="tab-btn">Repaso</button>
+      </div>
+
+      <!-- Panel de lecciones regulares -->
+      <div id="panelLessons" class="tab-panel active">
+        <div class="controls-row">
+          <div class="lesson-selection">
+            <label for="unidadSelect">Lección:</label>
+            <select id="unidadSelect"></select>
+          </div>
+          <div class="options-inline">
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="showRomaji" checked>
+                Mostrar romaji
+              </label>
+            </div>
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="shuffleCards">
+                Mezclar tarjetas
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de repaso -->
+      <div id="panelReview" class="tab-panel hidden">
+        <div class="controls-row">
+          <div class="lesson-selection">
+            <label for="reviewSelect">Repaso disponible:</label>
+            <select id="reviewSelect">
+              <option value="">Selecciona una lección para repasar</option>
+            </select>
+          </div>
+          <div class="options-inline">
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="showRomaji" checked>
+                Mostrar romaji
+              </label>
+            </div>
+            <div class="option-group">
+              <label>
+                <input type="checkbox" id="shuffleCards">
+                Mezclar tarjetas
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="start-section">
         <button id="btnStart">Comenzar</button>
       </div>
     </header>
 
     <main>
       <section id="board" class="hidden">
-        <div class="progress"><span id="progressText"></span></div>
+        <div class="board-header">
+          <div class="progress"><span id="progressText"></span></div>
+          <button id="btnChangeLesson" class="btn-change-lesson">Cambiar lección</button>
+        </div>
 
         <div id="card" class="card">
           <div class="front" id="cardFront"></div>
