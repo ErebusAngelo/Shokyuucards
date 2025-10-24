@@ -108,6 +108,10 @@ h1 {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-btn:hover {
@@ -118,6 +122,18 @@ h1 {
 .tab-btn.active {
   background: var(--gradient-primary);
   color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.tab-game {
+  text-transform: none;
+  font-size: 13px;
+}
+
+.tab-game:hover {
+  background: var(--gradient-primary);
+  color: white;
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 

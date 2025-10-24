@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Emparejamiento - Vocabulario Japonés</title>
+    <link rel="stylesheet" href="matching-game.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Juego de Emparejamiento</h1>
+            <p>Conecta las palabras en japonés con su significado en español</p>
+        </header>
+
+        <div class="game-controls">
+            <div class="lesson-selector">
+                <label for="lessonSelect">Selecciona una lección:</label>
+                <select id="lessonSelect">
+                    <option value="">-- Elige una lección --</option>
+                </select>
+            </div>
+            <button id="startGame" disabled>Iniciar Juego</button>
+            <button id="newGame" style="display: none;">Nuevo Juego</button>
+            <button id="backToMenu" class="back-btn">← Volver al Menú Principal</button>
+        </div>
+
+        <div class="game-info">
+            <div class="score">
+                <span>Puntuación: <span id="score">0</span></span>
+                <span>Tiempo: <span id="timer">00:00</span></span>
+            </div>
+            <div class="progress">
+                <span>Progreso: <span id="progress">0/0</span></span>
+            </div>
+        </div>
+
+        <div id="gameArea" class="game-area" style="display: none;">
+            <div class="column kana-column">
+                <h3>🈂️ Japonés (Kana)</h3>
+                <div id="kanaCards" class="cards-container"></div>
+            </div>
+            
+            <div class="column spanish-column">
+                <h3>🇪🇸 Español</h3>
+                <div id="spanishCards" class="cards-container"></div>
+            </div>
+        </div>
+
+        <div id="gameComplete" class="game-complete" style="display: none;">
+            <div class="completion-message">
+                <h2>🎉 ¡Felicidades!</h2>
+                <p>Has completado el juego exitosamente</p>
+                <div class="final-stats">
+                    <p>Tiempo total: <span id="finalTime"></span></p>
+                    <p>Puntuación final: <span id="finalScore"></span></p>
+                </div>
+                <button id="playAgain">Jugar de Nuevo</button>
+                <button id="backToMenuFromComplete">Volver al Menú</button>
+            </div>
+        </div>
+
+        <div id="instructions" class="instructions">
+            <h3>📋 Instrucciones</h3>
+            <ul>
+                <li>Selecciona una lección del menú desplegable</li>
+                <li>Haz clic en "Iniciar Juego" para comenzar</li>
+                <li>Conecta cada palabra japonesa con su traducción en español</li>
+                <li>Haz clic en una tarjeta japonesa y luego en su traducción correspondiente</li>
+                <li>Las parejas correctas se marcarán en verde</li>
+                <li>¡Completa todas las parejas para ganar!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="matching-game.js"></script>
+</body>
+</html>
