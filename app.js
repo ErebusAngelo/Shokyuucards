@@ -1,4 +1,7 @@
 const unidadSelect = document.getElementById("unidadSelect");
+const partSelect = document.getElementById("partSelect");
+const lessonParts = document.getElementById("lessonParts");
+const partInfo = document.getElementById("partInfo");
 const btnStart = document.getElementById("btnStart");
 const board = document.getElementById("board");
 const card = document.getElementById("card");
@@ -25,6 +28,7 @@ let originalDeck = []; // Mazo original para modo infinito
 let index = 0;
 let stats = { correct: 0, wrong: 0 };
 let currentUnit = "";
+let currentPart = "all"; // Nueva variable para la parte seleccionada
 let wrongWords = []; // Palabras incorrectas en la sesión actual
 let showRomaji = true; // Estado del toggle de romaji
 let shuffleCards = false; // Estado del toggle de mezclar tarjetas
@@ -38,31 +42,121 @@ function populateUnits() {
   // Limpiar opciones existentes
   unidadSelect.innerHTML = '';
   
-  Object.keys(vocabulario).forEach(u => {
-    const opt = document.createElement("option");
-    opt.value = u;
-    opt.textContent = u;
-    unidadSelect.appendChild(opt);
+  // Agregar opción por defecto
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Selecciona una lección';
+  unidadSelect.appendChild(defaultOption);
+  
+  // Agregar lecciones del vocabulario
+  Object.keys(vocabulario).forEach(unit => {
+    const option = document.createElement('option');
+    option.value = unit;
+    option.textContent = unit;
+    unidadSelect.appendChild(option);
   });
+}
+
+// Nueva función para generar partes de lección
+function generateLessonParts(lessonWords) {
+  const totalWords = lessonWords.length;
+  const parts = [];
+  
+  // Si la lección tiene menos de 30 palabras, no dividir
+  if (totalWords < 30) {
+    return parts;
+  }
+  
+  // Dividir en partes de aproximadamente 20-25 palabras
+  const wordsPerPart = 20;
+  const numParts = Math.ceil(totalWords / wordsPerPart);
+  
+  for (let i = 0; i < numParts; i++) {
+    const start = i * wordsPerPart;
+    const end = Math.min(start + wordsPerPart, totalWords);
+    parts.push({
+      id: `part-${i + 1}`,
+      name: `Parte ${i + 1} (${start + 1}-${end})`,
+      start: start,
+      end: end,
+      count: end - start
+    });
+  }
+  
+  return parts;
+}
+
+// Nueva función para actualizar las opciones de partes
+function updatePartOptions() {
+  const selectedLesson = unidadSelect.value;
+  
+  if (!selectedLesson) {
+    lessonParts.style.display = 'none';
+    return;
+  }
+  
+  const lessonWords = vocabulario[selectedLesson] || [];
+  const parts = generateLessonParts(lessonWords);
+  
+  // Limpiar opciones existentes
+  partSelect.innerHTML = '';
+  
+  // Agregar opción de lección completa
+  const completeOption = document.createElement('option');
+  completeOption.value = 'all';
+  completeOption.textContent = `Lección completa (${lessonWords.length} palabras)`;
+  partSelect.appendChild(completeOption);
+  
+  // Si hay partes, mostrar el selector
+  if (parts.length > 0) {
+    lessonParts.style.display = 'flex';
+    
+    // Agregar opciones de partes
+    parts.forEach(part => {
+      const option = document.createElement('option');
+      option.value = part.id;
+      option.textContent = part.name;
+      partSelect.appendChild(option);
+    });
+    
+    partInfo.textContent = `Esta lección tiene ${lessonWords.length} palabras. Puedes estudiarla por partes.`;
+  } else {
+    lessonParts.style.display = 'none';
+  }
 }
 
 function startDeck() {
   isInfiniteMode = false;
   currentUnit = unidadSelect.value;
+  currentPart = partSelect.value;
+  
   if (!currentUnit) {
     alert('Por favor selecciona una lección');
     return;
   }
-  currentDeck = [...vocabulario[currentUnit]];
-  originalDeck = [...vocabulario[currentUnit]];
+  
+  let words = [...vocabulario[currentUnit]];
+  
   // Obtener estado de palabras opcionales para lecciones
   includeOptional = includeOptionalCheckbox.checked;
   
   // Filtrar palabras opcionales si no están incluidas
   if (!includeOptional) {
-    currentDeck = currentDeck.filter(word => !word.optional);
-    originalDeck = originalDeck.filter(word => !word.optional);
+    words = words.filter(word => !word.optional);
   }
+  
+  // Si se seleccionó una parte específica, filtrar las palabras
+  if (currentPart !== 'all') {
+    const parts = generateLessonParts(vocabulario[currentUnit] || []);
+    const selectedPartData = parts.find(part => part.id === currentPart);
+    
+    if (selectedPartData) {
+      words = words.slice(selectedPartData.start, selectedPartData.end);
+    }
+  }
+  
+  currentDeck = [...words];
+  originalDeck = [...words];
   
   // Aplicar mezcla si está activada
   if (shuffleCards) {
@@ -216,11 +310,21 @@ function updateProgress() {
   const totalWords = currentDeck.length;
   const currentPosition = Math.min(index + 1, totalWords);
   
+  // Información de la parte si aplica
+  let partInfo = '';
+  if (currentPart !== 'all') {
+    const parts = generateLessonParts(vocabulario[currentUnit] || []);
+    const selectedPartData = parts.find(part => part.id === currentPart);
+    if (selectedPartData) {
+      partInfo = ` - ${selectedPartData.name}`;
+    }
+  }
+  
   progressText.innerHTML = `
-    <div>${currentPosition} / ${totalWords}${modeText}</div>
-    <div style="font-size: 12px; margin-top: 4px;">
-      <span style="color: #10b981;">✓ Recordadas: ${rememberedWords.length}</span> | 
-      <span style="color: #ef4444;">✗ No recordadas: ${notRememberedWords.length}</span>
+    <div class="progress-info">
+      <div class="lesson-info">${currentUnit}${partInfo}</div>
+      <div class="card-counter">${currentPosition}/${totalWords}${modeText}</div>
+      <div class="stats">Recordadas: ${rememberedWords.length} | No recordadas: ${notRememberedWords.length}</div>
     </div>
   `;
 }
@@ -280,7 +384,13 @@ function startInfiniteMode() {
   showCard();
 }
 
-btnStart.onclick = startDeck;
+// Event listeners
+unidadSelect.addEventListener("change", updatePartOptions);
+partSelect.addEventListener("change", function() {
+  currentPart = partSelect.value;
+});
+
+btnStart.addEventListener("click", startDeck);
 btnRestart.onclick = () => {
   board.classList.add('hidden');
   resultSection.classList.add('hidden');
@@ -327,9 +437,15 @@ btnChangeLesson.addEventListener('click', () => {
   completedWords = [];
   rememberedWords = [];
   notRememberedWords = [];
+  currentPart = "all"; // Resetear la parte seleccionada
   
   // Limpiar el contador visual
   progressText.innerHTML = '';
+  
+  // Resetear selectores
+  unidadSelect.value = '';
+  partSelect.value = 'all';
+  lessonParts.style.display = 'none';
 });
 
 // Event listener para audio
