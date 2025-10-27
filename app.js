@@ -1,5 +1,4 @@
 const unidadSelect = document.getElementById("unidadSelect");
-const reviewSelect = document.getElementById("reviewSelect");
 const btnStart = document.getElementById("btnStart");
 const board = document.getElementById("board");
 const card = document.getElementById("card");
@@ -14,26 +13,26 @@ const resultText = document.getElementById("resultText");
 const btnRestart = document.getElementById("btnRestart");
 const btnChangeLesson = document.getElementById("btnChangeLesson");
 
-// Nuevos elementos para tabs y opciones
+// Elementos para opciones
 const tabLessons = document.getElementById("tabLessons");
-const tabReview = document.getElementById("tabReview");
 const panelLessons = document.getElementById("panelLessons");
-const panelReview = document.getElementById("panelReview");
 const showRomajiCheckbox = document.getElementById("showRomaji");
 const shuffleCardsCheckbox = document.getElementById("shuffleCards");
 const includeOptionalCheckbox = document.getElementById("includeOptional");
-const includeOptionalReviewCheckbox = document.getElementById("includeOptionalReview");
 
 let currentDeck = [];
+let originalDeck = []; // Mazo original para modo infinito
 let index = 0;
 let stats = { correct: 0, wrong: 0 };
-let reviewDecks = {}; // Almacena mazos de repaso por lección
-let isReviewMode = false;
 let currentUnit = "";
 let wrongWords = []; // Palabras incorrectas en la sesión actual
 let showRomaji = true; // Estado del toggle de romaji
 let shuffleCards = false; // Estado del toggle de mezclar tarjetas
 let includeOptional = false; // Estado del toggle de palabras opcionales
+let isInfiniteMode = false; // Nuevo: modo infinito
+let completedWords = []; // Palabras que ya se han recordado correctamente
+let rememberedWords = []; // Palabras recordadas que necesitan refuerzo
+let notRememberedWords = []; // Palabras no recordadas
 
 function populateUnits() {
   // Limpiar opciones existentes
@@ -47,47 +46,22 @@ function populateUnits() {
   });
 }
 
-function populateReviewOptions() {
-  // Limpiar opciones existentes
-  reviewSelect.innerHTML = '<option value="">Selecciona una lección para repasar</option>';
-  
-  Object.keys(reviewDecks).forEach(u => {
-    if (reviewDecks[u] && reviewDecks[u].length > 0) {
-      const opt = document.createElement("option");
-      opt.value = u;
-      opt.textContent = `${u} (${reviewDecks[u].length} palabras)`;
-      reviewSelect.appendChild(opt);
-    }
-  });
-}
-
 function startDeck() {
-  // Determinar si estamos en modo repaso y obtener la selección
-  if (tabReview.classList.contains('active')) {
-    isReviewMode = true;
-    currentUnit = reviewSelect.value;
-    if (!currentUnit) {
-      alert('Por favor selecciona una lección para repasar');
-      return;
-    }
-    currentDeck = [...reviewDecks[currentUnit]];
-    // Obtener estado de palabras opcionales para repaso
-    includeOptional = includeOptionalReviewCheckbox.checked;
-  } else {
-    isReviewMode = false;
-    currentUnit = unidadSelect.value;
-    if (!currentUnit) {
-      alert('Por favor selecciona una lección');
-      return;
-    }
-    currentDeck = [...vocabulario[currentUnit]];
-    // Obtener estado de palabras opcionales para lecciones
-    includeOptional = includeOptionalCheckbox.checked;
+  isInfiniteMode = false;
+  currentUnit = unidadSelect.value;
+  if (!currentUnit) {
+    alert('Por favor selecciona una lección');
+    return;
   }
+  currentDeck = [...vocabulario[currentUnit]];
+  originalDeck = [...vocabulario[currentUnit]];
+  // Obtener estado de palabras opcionales para lecciones
+  includeOptional = includeOptionalCheckbox.checked;
   
   // Filtrar palabras opcionales si no están incluidas
   if (!includeOptional) {
     currentDeck = currentDeck.filter(word => !word.optional);
+    originalDeck = originalDeck.filter(word => !word.optional);
   }
   
   // Aplicar mezcla si está activada
@@ -96,15 +70,21 @@ function startDeck() {
   }
   
   index = 0;
-  stats = { correct: 0, wrong: 0 };
+  stats = { correct: 0, wrong: 0 }; // Reiniciar stats completamente
   wrongWords = [];
-  board.classList.remove("hidden");
-  resultSection.classList.add("hidden");
+  completedWords = [];
+  rememberedWords = [];
+  notRememberedWords = [];
+  
+  // Mostrar el tablero y ocultar otros elementos
+  document.querySelector('.app header').classList.add('hidden');
+  board.classList.remove('hidden');
+  resultSection.classList.add('hidden');
+  
   showCard();
-  updateProgress();
+  updateProgress(); // Actualizar contador al iniciar nueva lección
 }
 
-// Función para mezclar el mazo
 function shuffleDeck(deck) {
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -113,7 +93,28 @@ function shuffleDeck(deck) {
 }
 
 function showCard() {
-  if (index >= currentDeck.length) return showResult();
+  // Si hemos terminado todas las cartas del mazo actual
+  if (index >= currentDeck.length) {
+    // Si hay palabras incorrectas, agregarlas al final del mazo (SIN palabras recordadas)
+    if (wrongWords.length > 0) {
+      // Crear un nuevo mazo solo con las palabras incorrectas para la nueva ronda
+      currentDeck = [...wrongWords];
+      
+      // Mezclar las palabras incorrectas
+      shuffleDeck(currentDeck);
+      
+      // Reiniciar solo el índice para la nueva ronda
+      index = 0;
+      
+      // Limpiar wrongWords para la nueva ronda
+      wrongWords = [];
+      updateProgress();
+      showCard();
+      return;
+    }
+    // Si no hay palabras incorrectas, mostrar resultado
+    return showResult();
+  }
   
   // Primero asegurar que la tarjeta esté en el lado frontal
   card.classList.remove("flipped");
@@ -142,14 +143,34 @@ card.addEventListener("click", () => {
 btnGot.onclick = () => { 
   stats.correct++; 
   
-  // Si estamos en modo repaso, quitar la palabra del mazo de repaso
-  if (isReviewMode) {
-    const currentWord = currentDeck[index];
-    reviewDecks[currentUnit] = reviewDecks[currentUnit].filter(word => 
-      word.jp !== currentWord.jp || word.romaji !== currentWord.romaji
-    );
-    saveReviewDecks();
+  // Agregar palabra a recordadas si no está ya
+  const currentWord = currentDeck[index];
+  const alreadyRemembered = rememberedWords.some(word => 
+    word.jp === currentWord.jp && word.romaji === currentWord.romaji
+  );
+  
+  if (!alreadyRemembered) {
+    rememberedWords.push(currentWord);
   }
+  
+  // Agregar a completadas si no está ya
+  const alreadyCompleted = completedWords.some(word => 
+    word.jp === currentWord.jp && word.romaji === currentWord.romaji
+  );
+  
+  if (!alreadyCompleted) {
+    completedWords.push(currentWord);
+  }
+  
+  // Remover de palabras no recordadas si estaba ahí
+  notRememberedWords = notRememberedWords.filter(word => 
+    word.jp !== currentWord.jp || word.romaji !== currentWord.romaji
+  );
+  
+  // IMPORTANTE: Remover de wrongWords si estaba ahí (para que no se repita)
+  wrongWords = wrongWords.filter(word => 
+    word.jp !== currentWord.jp || word.romaji !== currentWord.romaji
+  );
   
   nextCard(); 
 };
@@ -157,8 +178,24 @@ btnGot.onclick = () => {
 btnNotGot.onclick = () => { 
   stats.wrong++; 
   
-  // Agregar palabra a la lista de palabras incorrectas
-  wrongWords.push(currentDeck[index]);
+  // Solo agregar a wrongWords si no está ya ahí
+  const currentWord = currentDeck[index];
+  const alreadyInWrong = wrongWords.some(word => 
+    word.jp === currentWord.jp && word.romaji === currentWord.romaji
+  );
+  
+  if (!alreadyInWrong) {
+    wrongWords.push(currentWord);
+  }
+  
+  // Agregar a no recordadas si no está ya
+  const alreadyNotRemembered = notRememberedWords.some(word => 
+    word.jp === currentWord.jp && word.romaji === currentWord.romaji
+  );
+  
+  if (!alreadyNotRemembered) {
+    notRememberedWords.push(currentWord);
+  }
   
   nextCard(); 
 };
@@ -170,99 +207,92 @@ function nextCard() {
 }
 
 function updateProgress() {
-  const modeText = isReviewMode ? " (Repaso)" : "";
-  progressText.textContent = `${Math.min(index + 1, currentDeck.length)} / ${currentDeck.length}${modeText}`;
+  let modeText = "";
+  if (isInfiniteMode) {
+    modeText = " (Modo Infinito)";
+  }
+  
+  // El contador superior siempre muestra el progreso de la ronda actual
+  const totalWords = currentDeck.length;
+  const currentPosition = Math.min(index + 1, totalWords);
+  
+  progressText.innerHTML = `
+    <div>${currentPosition} / ${totalWords}${modeText}</div>
+    <div style="font-size: 12px; margin-top: 4px;">
+      <span style="color: #10b981;">✓ Recordadas: ${rememberedWords.length}</span> | 
+      <span style="color: #ef4444;">✗ No recordadas: ${notRememberedWords.length}</span>
+    </div>
+  `;
 }
 
 function showResult() {
   board.classList.add("hidden");
   resultSection.classList.remove("hidden");
-  const total = stats.correct + stats.wrong;
-  const pct = Math.round((stats.correct / total) * 100);
   
-  let resultHTML = `✔️ Correctas: ${stats.correct}<br>❌ Incorrectas: ${stats.wrong}<br><br><strong>${pct}%</strong> aciertos`;
+  let resultHTML = ``;
   
-  // Si hay palabras incorrectas y no estamos en modo repaso, crear/actualizar mazo de repaso
-  if (wrongWords.length > 0 && !isReviewMode) {
-    if (!reviewDecks[currentUnit]) {
-      reviewDecks[currentUnit] = [];
+  // Si completamos todas las palabras sin errores o estamos en modo infinito
+  if (wrongWords.length === 0) {
+    if (isInfiniteMode) {
+      resultHTML += `🔄 Sesión de modo infinito completada`;
+    } else {
+      resultHTML += `🎉 ¡Excelente! Has recordado todas las palabras correctamente`;
     }
     
-    // Agregar palabras incorrectas al mazo de repaso (evitar duplicados)
-    wrongWords.forEach(word => {
-      const exists = reviewDecks[currentUnit].some(reviewWord => 
-        reviewWord.jp === word.jp && reviewWord.romaji === word.romaji
-      );
-      if (!exists) {
-        reviewDecks[currentUnit].push(word);
-      }
-    });
-    
-    saveReviewDecks();
-    resultHTML += `<br><br>📚 Se creó un mazo de repaso con ${wrongWords.length} palabra(s) nueva(s).<br>Total en repaso: ${reviewDecks[currentUnit].length} palabras`;
-  }
-  
-  // Si terminamos un repaso y no quedan palabras
-  if (isReviewMode && reviewDecks[currentUnit] && reviewDecks[currentUnit].length === 0) {
-    resultHTML += `<br><br>🎉 ¡Felicidades! Has completado el repaso de ${currentUnit}`;
-    delete reviewDecks[currentUnit];
-    saveReviewDecks();
+    // Agregar botón para modo infinito si no estamos ya en él
+    if (!isInfiniteMode) {
+      resultHTML += `<br><br><button id="btnInfiniteMode" class="btn" style="margin: 10px; padding: 12px 24px; background: var(--gradient-primary); border: none; border-radius: 8px; color: white; cursor: pointer;">🔄 Continuar en Modo Infinito</button>`;
+    }
+  } else {
+    resultHTML += `📚 Lección completada`;
   }
   
   resultText.innerHTML = resultHTML;
-}
-
-function saveReviewDecks() {
-  localStorage.setItem('reviewDecks', JSON.stringify(reviewDecks));
-}
-
-function loadReviewDecks() {
-  const saved = localStorage.getItem('reviewDecks');
-  if (saved) {
-    reviewDecks = JSON.parse(saved);
+  
+  // Agregar event listener para el botón de modo infinito
+  const btnInfiniteMode = document.getElementById('btnInfiniteMode');
+  if (btnInfiniteMode) {
+    btnInfiniteMode.onclick = startInfiniteMode;
   }
+}
+
+function startInfiniteMode() {
+  isInfiniteMode = true;
+  
+  // Reiniciar con el mazo original
+  currentDeck = [...originalDeck];
+  
+  // Aplicar mezcla si está activada
+  if (shuffleCards) {
+    shuffleDeck(currentDeck);
+  }
+  
+  index = 0;
+  stats = { correct: 0, wrong: 0 }; // Reiniciar stats completamente
+  wrongWords = [];
+  rememberedWords = [];
+  notRememberedWords = [];
+  
+  // Mostrar el tablero y ocultar resultado
+  board.classList.remove('hidden');
+  resultSection.classList.add('hidden');
+  
+  showCard();
 }
 
 btnStart.onclick = startDeck;
 btnRestart.onclick = () => {
-  // Recargar las opciones del select para mostrar mazos de repaso actualizados
-  populateUnits();
-  populateReviewOptions();
-  
-  // Ocultar secciones
-  board.classList.add("hidden");
-  resultSection.classList.add("hidden");
+  board.classList.add('hidden');
+  resultSection.classList.add('hidden');
+  document.querySelector('.app header').classList.remove('hidden');
 };
 
-// ===== FUNCIONALIDAD DE TABS =====
-function switchTab(activeTab, activePanel) {
-  // Remover clase active de todos los tabs y panels
-  document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(panel => {
-    panel.classList.remove('active');
-    panel.classList.add('hidden');
-  });
-  
-  // Activar el tab y panel seleccionados
-  activeTab.classList.add('active');
-  activePanel.classList.remove('hidden');
-  activePanel.classList.add('active');
-}
-
-tabLessons.addEventListener('click', () => {
-  switchTab(tabLessons, panelLessons);
-});
-
-tabReview.addEventListener('click', () => {
-  switchTab(tabReview, panelReview);
-  populateReviewOptions(); // Actualizar opciones de repaso al cambiar a la pestaña
-});
-
-// ===== OPCIONES DE CONFIGURACIÓN =====
+// Event listeners para checkboxes
 showRomajiCheckbox.addEventListener('change', (e) => {
   showRomaji = e.target.checked;
-  // Si hay una tarjeta activa, actualizarla inmediatamente
-  if (currentDeck.length > 0 && index < currentDeck.length) {
+  
+  // Si hay una tarjeta visible, actualizar su contenido
+  if (!board.classList.contains('hidden') && index < currentDeck.length) {
     const item = currentDeck[index];
     if (showRomaji) {
       cardBack.innerHTML = `<div>${item.jp}</div><div>${item.romaji}</div><div>${item.es}</div>`;
@@ -281,44 +311,110 @@ includeOptionalCheckbox.addEventListener('change', (e) => {
   includeOptional = e.target.checked;
 });
 
-includeOptionalReviewCheckbox.addEventListener('change', (e) => {
-  includeOptional = e.target.checked;
+// Event listener para cambiar lección
+btnChangeLesson.addEventListener('click', () => {
+  board.classList.add('hidden');
+  resultSection.classList.add('hidden');
+  document.querySelector('.app header').classList.remove('hidden');
+  
+  // Reset COMPLETO de todas las variables
+  isInfiniteMode = false;
+  currentDeck = [];
+  originalDeck = [];
+  index = 0;
+  stats = { correct: 0, wrong: 0 }; // Reiniciar stats completamente
+  wrongWords = [];
+  completedWords = [];
+  rememberedWords = [];
+  notRememberedWords = [];
+  
+  // Limpiar el contador visual
+  progressText.innerHTML = '';
 });
 
-// ===== CAMBIAR LECCIÓN =====
-btnChangeLesson.addEventListener('click', () => {
-  // Confirmar si el usuario realmente quiere cambiar de lección
-  if (confirm('¿Estás seguro de que quieres cambiar de lección? Se perderá el progreso actual.')) {
-    // Ocultar el tablero de juego
-    board.classList.add('hidden');
-    
-    // Mostrar el header nuevamente
-    document.querySelector('header').style.display = 'block';
-    
-    // Resetear variables del juego
-    currentDeck = [];
-    index = 0;
-    stats = { correct: 0, wrong: 0 };
-    wrongWords = [];
-    
-    // Ocultar la parte trasera de la tarjeta si está visible
-    cardBack.classList.add('hidden');
+// Event listener para audio
+playAudioBtn.addEventListener("click", (event) => {
+  event.stopPropagation(); // Evitar que se voltee la tarjeta
+  const currentWord = currentDeck[index];
+  if (currentWord) {
+    // Usar síntesis de voz del navegador para pronunciar la palabra japonesa
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(currentWord.jp);
+      utterance.lang = 'ja-JP'; // Configurar idioma japonés
+      utterance.rate = 0.8; // Velocidad más lenta para mejor comprensión
+      utterance.pitch = 1; // Tono normal
+      speechSynthesis.speak(utterance);
+    } else {
+      console.log('La síntesis de voz no está disponible en este navegador');
+    }
   }
 });
 
-// ===== AUDIO DE PRONUNCIACIÓN =====
-playAudioBtn.addEventListener("click", (event) => {
-  event.stopPropagation(); // Evitar que el click se propague al card y lo voltee
-  const item = currentDeck[index];
-  if (!item || !item.jp) return;
-  const utterance = new SpeechSynthesisUtterance(item.jp);
-  utterance.lang = "ja-JP"; // japonés
-  utterance.rate = 0.9; // velocidad natural
-  speechSynthesis.speak(utterance);
-});
+// Prevenir eventos de selección y arrastre en dispositivos móviles
+function preventMobileSelection() {
+  // Prevenir selección de texto en toda la aplicación
+  document.addEventListener('selectstart', function(e) {
+    e.preventDefault();
+    return false;
+  });
 
-// ===== INICIALIZACIÓN =====
-// Cargar mazos de repaso al iniciar
-loadReviewDecks();
+  // Prevenir menú contextual en dispositivos móviles
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+  });
+
+  // Prevenir arrastre de elementos
+  document.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+    return false;
+  });
+
+  // Prevenir eventos de toque prolongado en iOS
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Prevenir zoom con pellizco
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Prevenir eventos específicos en las tarjetas
+  const preventCardEvents = (element) => {
+    if (element) {
+      element.addEventListener('selectstart', (e) => e.preventDefault());
+      element.addEventListener('dragstart', (e) => e.preventDefault());
+      element.addEventListener('contextmenu', (e) => e.preventDefault());
+      
+      // Prevenir eventos de toque prolongado específicamente en las tarjetas
+      let touchTimer;
+      element.addEventListener('touchstart', (e) => {
+        touchTimer = setTimeout(() => {
+          e.preventDefault();
+        }, 500);
+      }, { passive: false });
+      
+      element.addEventListener('touchend', () => {
+        clearTimeout(touchTimer);
+      });
+      
+      element.addEventListener('touchmove', () => {
+        clearTimeout(touchTimer);
+      });
+    }
+  };
+
+  // Aplicar prevención a elementos específicos
+  preventCardEvents(card);
+  preventCardEvents(cardFront);
+  preventCardEvents(cardBack);
+}
+
+// Inicialización
 populateUnits();
-populateReviewOptions();
+preventMobileSelection(); // Inicializar prevención de eventos móviles
