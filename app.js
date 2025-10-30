@@ -59,21 +59,23 @@ function populateUnits() {
 
 // Nueva función para generar partes de lección
 function generateLessonParts(lessonWords) {
-  const totalWords = lessonWords.length;
+  // Filtrar solo las palabras principales (no opcionales) para la partición
+  const mainWords = lessonWords.filter(word => !word.optional);
+  const totalMainWords = mainWords.length;
   const parts = [];
   
-  // Si la lección tiene menos de 30 palabras, no dividir
-  if (totalWords < 30) {
+  // Si la lección tiene menos de 30 palabras principales, no dividir
+  if (totalMainWords < 30) {
     return parts;
   }
   
-  // Dividir en partes de aproximadamente 20-25 palabras
+  // Dividir en partes de aproximadamente 20-25 palabras principales
   const wordsPerPart = 20;
-  const numParts = Math.ceil(totalWords / wordsPerPart);
+  const numParts = Math.ceil(totalMainWords / wordsPerPart);
   
   for (let i = 0; i < numParts; i++) {
     const start = i * wordsPerPart;
-    const end = Math.min(start + wordsPerPart, totalWords);
+    const end = Math.min(start + wordsPerPart, totalMainWords);
     parts.push({
       id: `part-${i + 1}`,
       name: `Parte ${i + 1} (${start + 1}-${end})`,
@@ -96,22 +98,30 @@ function updatePartOptions() {
   }
   
   const lessonWords = vocabulario[selectedLesson] || [];
+  const mainWords = lessonWords.filter(word => !word.optional);
+  const optionalWords = lessonWords.filter(word => word.optional);
   const parts = generateLessonParts(lessonWords);
+  
+  // Detectar el estado actual del checkbox de palabras opcionales
+  const includeOptionalWords = includeOptionalCheckbox.checked;
+  
+  // Calcular el número real de palabras según el checkbox
+  const actualWordCount = includeOptionalWords ? lessonWords.length : mainWords.length;
   
   // Limpiar opciones existentes
   partSelect.innerHTML = '';
   
-  // Agregar opción de lección completa
+  // Agregar opción de lección completa con conteo dinámico
   const completeOption = document.createElement('option');
   completeOption.value = 'all';
-  completeOption.textContent = `Lección completa (${lessonWords.length} palabras)`;
+  completeOption.textContent = `Lección completa (${actualWordCount} palabras)`;
   partSelect.appendChild(completeOption);
   
-  // Si hay partes, mostrar el selector
-  if (parts.length > 0) {
+  // Si hay partes o palabras opcionales, mostrar el selector
+  if (parts.length > 0 || optionalWords.length > 0) {
     lessonParts.style.display = 'flex';
     
-    // Agregar opciones de partes
+    // Agregar opciones de partes (basadas en palabras principales)
     parts.forEach(part => {
       const option = document.createElement('option');
       option.value = part.id;
@@ -119,7 +129,24 @@ function updatePartOptions() {
       partSelect.appendChild(option);
     });
     
-    partInfo.textContent = `Esta lección tiene ${lessonWords.length} palabras. Puedes estudiarla por partes.`;
+    // Agregar opción para palabras opcionales si existen
+    if (optionalWords.length > 0) {
+      const optionalOption = document.createElement('option');
+      optionalOption.value = 'optional-only';
+      optionalOption.textContent = `Solo palabras extras (${optionalWords.length} palabras)`;
+      partSelect.appendChild(optionalOption);
+    }
+    
+    let infoText = `Esta lección tiene ${mainWords.length} palabras principales`;
+    if (optionalWords.length > 0) {
+      infoText += ` y ${optionalWords.length} palabras extras`;
+    }
+    if (parts.length > 0) {
+      infoText += `. Puedes estudiarla por partes.`;
+    } else {
+      infoText += `.`;
+    }
+    partInfo.textContent = infoText;
   } else {
     lessonParts.style.display = 'none';
   }
@@ -127,56 +154,65 @@ function updatePartOptions() {
 
 function startDeck() {
   isInfiniteMode = false;
-  currentUnit = unidadSelect.value;
-  currentPart = partSelect.value;
-  
-  if (!currentUnit) {
-    alert('Por favor selecciona una lección');
-    return;
-  }
-  
-  let words = [...vocabulario[currentUnit]];
-  
-  // Obtener estado de palabras opcionales para lecciones
-  includeOptional = includeOptionalCheckbox.checked;
-  
-  // Filtrar palabras opcionales si no están incluidas
-  if (!includeOptional) {
-    words = words.filter(word => !word.optional);
-  }
-  
-  // Si se seleccionó una parte específica, filtrar las palabras
-  if (currentPart !== 'all') {
-    const parts = generateLessonParts(vocabulario[currentUnit] || []);
-    const selectedPartData = parts.find(part => part.id === currentPart);
-    
-    if (selectedPartData) {
-      words = words.slice(selectedPartData.start, selectedPartData.end);
-    }
-  }
-  
-  currentDeck = [...words];
-  originalDeck = [...words];
-  
-  // Aplicar mezcla si está activada
-  if (shuffleCards) {
-    shuffleDeck(currentDeck);
-  }
-  
   index = 0;
-  stats = { correct: 0, wrong: 0 }; // Reiniciar stats completamente
+  stats = { correct: 0, wrong: 0 };
   wrongWords = [];
   completedWords = [];
   rememberedWords = [];
   notRememberedWords = [];
   
+  const selectedUnit = unidadSelect.value;
+  const selectedPart = partSelect.value;
+  
+  if (!selectedUnit) {
+    alert("Por favor selecciona una lección");
+    return;
+  }
+  
+  currentUnit = selectedUnit;
+  currentPart = selectedPart;
+  
+  let words = vocabulario[selectedUnit] || [];
+  
+  // Manejar diferentes tipos de selección
+  if (selectedPart === 'optional-only') {
+    // Solo palabras opcionales
+    words = words.filter(word => word.optional);
+  } else if (selectedPart === 'all') {
+    // Lección completa - aplicar filtro de opcionales según checkbox
+    if (!includeOptional) {
+      words = words.filter(word => !word.optional);
+    }
+  } else if (selectedPart.startsWith('part-')) {
+    // Parte específica - solo palabras principales
+    const mainWords = words.filter(word => !word.optional);
+    const parts = generateLessonParts(vocabulario[selectedUnit] || []);
+    const selectedPartData = parts.find(part => part.id === selectedPart);
+    
+    if (selectedPartData) {
+      words = mainWords.slice(selectedPartData.start, selectedPartData.end);
+    }
+  }
+  
+  if (words.length === 0) {
+    alert("No hay palabras disponibles para esta selección");
+    return;
+  }
+  
+  currentDeck = [...words];
+  originalDeck = [...words];
+  
+  if (shuffleCards) {
+    shuffleDeck(currentDeck);
+  }
+  
+  updateProgress();
+  showCard();
+  
   // Mostrar el tablero y ocultar otros elementos
   document.querySelector('.app header').classList.add('hidden');
   board.classList.remove('hidden');
   resultSection.classList.add('hidden');
-  
-  showCard();
-  updateProgress(); // Actualizar contador al iniciar nueva lección
 }
 
 function shuffleDeck(deck) {
@@ -310,9 +346,11 @@ function updateProgress() {
   const totalWords = currentDeck.length;
   const currentPosition = Math.min(index + 1, totalWords);
   
-  // Información de la parte si aplica
+  // Información de la parte según el tipo de selección
   let partInfo = '';
-  if (currentPart !== 'all') {
+  if (currentPart === 'optional-only') {
+    partInfo = ' - Solo palabras opcionales';
+  } else if (currentPart.startsWith('part-')) {
     const parts = generateLessonParts(vocabulario[currentUnit] || []);
     const selectedPartData = parts.find(part => part.id === currentPart);
     if (selectedPartData) {
@@ -419,6 +457,8 @@ shuffleCardsCheckbox.addEventListener('change', (e) => {
 // Event listeners para palabras opcionales
 includeOptionalCheckbox.addEventListener('change', (e) => {
   includeOptional = e.target.checked;
+  // Actualizar las opciones de partes cuando cambie el checkbox
+  updatePartOptions();
 });
 
 // Event listener para cambiar lección
