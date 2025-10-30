@@ -1,0 +1,45 @@
+{
+  "name": "shokyuucards",
+  "version": "1.0.0",
+  "description": "Sistema de flashcards para aprendizaje de japonés",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --local",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "flashcards",
+    "japanese",
+    "learning",
+    "education",
+    "mongodb",
+    "express",
+    "socketio"
+  ],
+  "author": "Shokyuu Cards Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5",
+    "mongodb": "^6.1.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shokyuu/shokyuucards.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shokyuu/shokyuucards/issues"
+  },
+  "homepage": "https://github.com/shokyuu/shokyuucards#readme"
+}
