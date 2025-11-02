@@ -22,6 +22,7 @@ const panelLessons = document.getElementById("panelLessons");
 const showRomajiCheckbox = document.getElementById("showRomaji");
 const shuffleCardsCheckbox = document.getElementById("shuffleCards");
 const includeOptionalCheckbox = document.getElementById("includeOptional");
+const reverseModeCheckbox = document.getElementById("reverseMode");
 
 let currentDeck = [];
 let originalDeck = []; // Mazo original para modo infinito
@@ -33,6 +34,7 @@ let wrongWords = []; // Palabras incorrectas en la sesión actual
 let showRomaji = true; // Estado del toggle de romaji
 let shuffleCards = false; // Estado del toggle de mezclar tarjetas
 let includeOptional = false; // Estado del toggle de palabras opcionales
+let reverseMode = false; // Estado del modo inverso (español → japonés)
 let isInfiniteMode = false; // Nuevo: modo infinito
 let completedWords = []; // Palabras que ya se han recordado correctamente
 let rememberedWords = []; // Palabras recordadas que necesitan refuerzo
@@ -252,13 +254,27 @@ function showCard() {
   // Esperar un momento para que la animación termine antes de cambiar el contenido
   setTimeout(() => {
     const item = currentDeck[index];
-    cardFront.textContent = item.jp;
     
-    // Mostrar u ocultar romaji según la configuración
-    if (showRomaji) {
-      cardBack.innerHTML = `<div>${item.jp}</div><div>${item.romaji}</div><div>${item.es}</div>`;
+    // Modo inverso: mostrar español en el frente y japonés en la parte trasera
+    if (reverseMode) {
+      cardFront.textContent = item.es;
+      
+      // Mostrar u ocultar romaji según la configuración en modo inverso
+      if (showRomaji) {
+        cardBack.innerHTML = `<div>${item.jp}</div><div>${item.romaji}</div><div>${item.es}</div>`;
+      } else {
+        cardBack.innerHTML = `<div>${item.jp}</div><div>${item.es}</div>`;
+      }
     } else {
-      cardBack.innerHTML = `<div>${item.jp}</div><div>${item.es}</div>`;
+      // Modo normal: mostrar japonés en el frente y español en la parte trasera
+      cardFront.textContent = item.jp;
+      
+      // Mostrar u ocultar romaji según la configuración
+      if (showRomaji) {
+        cardBack.innerHTML = `<div>${item.jp}</div><div>${item.romaji}</div><div>${item.es}</div>`;
+      } else {
+        cardBack.innerHTML = `<div>${item.jp}</div><div>${item.es}</div>`;
+      }
     }
     
     // Remover la clase hidden del cardBack para que sea visible cuando se voltee
@@ -459,6 +475,11 @@ includeOptionalCheckbox.addEventListener('change', (e) => {
   includeOptional = e.target.checked;
   // Actualizar las opciones de partes cuando cambie el checkbox
   updatePartOptions();
+});
+
+// Event listener para modo inverso
+reverseModeCheckbox.addEventListener('change', (e) => {
+  reverseMode = e.target.checked;
 });
 
 // Event listener para cambiar lección

@@ -7,16 +7,6 @@ class AuthSystem {
     }
 
     init() {
-        // MODO DEBUG: Saltar autenticación temporalmente
-        console.log('🔧 MODO DEBUG: Autenticación deshabilitada temporalmente');
-        this.user = { username: 'Debug User', email: 'debug@test.com' };
-        this.updateUserInfo();
-        this.showMainApp();
-        this.setupEventListeners();
-        return;
-
-        // Código original comentado para debug
-        /*
         // Verificar si ya hay una sesión activa
         if (this.token) {
             this.verifyToken();
@@ -25,7 +15,6 @@ class AuthSystem {
         }
 
         this.setupEventListeners();
-        */
     }
 
     setupEventListeners() {
@@ -226,11 +215,7 @@ class AuthSystem {
     }
 
     isAuthenticated() {
-        // MODO DEBUG: Siempre autenticado
-        return true;
-        
-        // Código original comentado para debug
-        // return !!this.token;
+        return !!this.token;
     }
 }
 

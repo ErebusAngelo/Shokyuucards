@@ -1,4 +1,23 @@
 const vocabulario = {
+  "Palabras del aula": [
+    { jp: "はじめましょう", romaji: "hajimemashō", es: "Empecemos" },
+    { jp: "おわりましょう", romaji: "owarimashō", es: "Terminemos" },
+    { jp: "やすみましょう", romaji: "yasumimashō", es: "Descansemos" },
+    { jp: "わかりますか", romaji: "wakarimasu ka", es: "¿Se entiende? / ¿No se entiende?" },
+    { jp: "もういちど", romaji: "mō ichido", es: "De nuevo por favor" },
+    { jp: "いいです", romaji: "ii desu", es: "Está bien" },
+    { jp: "ちがいます", romaji: "chigaimasu", es: "No es así" },
+    { jp: "なまえ", romaji: "namae", es: "Nombre" },
+    { jp: "しけん", romaji: "shiken", es: "Examen, tarea" },
+    { jp: "しつもん", romaji: "shitsumon", es: "pregunta / respuesta / ejemplo" },
+    { jp: "こたえ", romaji: "kotae", es: "respuesta" },
+    { jp: "れい", romaji: "rei", es: "ejemplo" },
+    { jp: "ページ", romaji: "pēji", es: "página" },
+    { jp: "つぎ", romaji: "tsugi", es: "siguiente" },
+    { jp: "まえ", romaji: "mae", es: "anterior" },
+    { jp: "よんでください", romaji: "yonde kudasai", es: "Por favor lea" },
+    { jp: "かいてください", romaji: "kaite kudasai", es: "Por favor escriba" }
+  ],
   "Lección 1": [
     { jp: "わたし", romaji: "watashi", es: "yo" },
     { jp: "わたしたち", romaji: "watashitachi", es: "nosotros" },
