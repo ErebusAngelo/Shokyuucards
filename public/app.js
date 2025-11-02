@@ -57,6 +57,11 @@ function populateUnits() {
     option.textContent = unit;
     unidadSelect.appendChild(option);
   });
+  
+  // Agregar mazos personalizados si existen
+  if (typeof customDecksManager !== 'undefined') {
+    customDecksManager.updateLessonSelector();
+  }
 }
 
 // Nueva función para generar partes de lección
@@ -95,6 +100,12 @@ function updatePartOptions() {
   const selectedLesson = unidadSelect.value;
   
   if (!selectedLesson) {
+    lessonParts.style.display = 'none';
+    return;
+  }
+  
+  // Si es un mazo personalizado, no mostrar opciones de partes
+  if (selectedLesson.startsWith('custom_')) {
     lessonParts.style.display = 'none';
     return;
   }
@@ -174,25 +185,39 @@ function startDeck() {
   currentUnit = selectedUnit;
   currentPart = selectedPart;
   
-  let words = vocabulario[selectedUnit] || [];
+  let words = [];
   
-  // Manejar diferentes tipos de selección
-  if (selectedPart === 'optional-only') {
-    // Solo palabras opcionales
-    words = words.filter(word => word.optional);
-  } else if (selectedPart === 'all') {
-    // Lección completa - aplicar filtro de opcionales según checkbox
-    if (!includeOptional) {
-      words = words.filter(word => !word.optional);
+  // Verificar si es un mazo personalizado
+  if (selectedUnit.startsWith('custom_')) {
+    const deckName = selectedUnit.replace('custom_', '');
+    if (typeof customDecksManager !== 'undefined' && customDecksManager.customDecks[deckName]) {
+      words = customDecksManager.customDecks[deckName] || [];
+    } else {
+      alert("Mazo personalizado no encontrado");
+      return;
     }
-  } else if (selectedPart.startsWith('part-')) {
-    // Parte específica - solo palabras principales
-    const mainWords = words.filter(word => !word.optional);
-    const parts = generateLessonParts(vocabulario[selectedUnit] || []);
-    const selectedPartData = parts.find(part => part.id === selectedPart);
+  } else {
+    // Lección regular
+    words = vocabulario[selectedUnit] || [];
     
-    if (selectedPartData) {
-      words = mainWords.slice(selectedPartData.start, selectedPartData.end);
+    // Manejar diferentes tipos de selección
+    if (selectedPart === 'optional-only') {
+      // Solo palabras opcionales
+      words = words.filter(word => word.optional);
+    } else if (selectedPart === 'all') {
+      // Lección completa - aplicar filtro de opcionales según checkbox
+      if (!includeOptional) {
+        words = words.filter(word => !word.optional);
+      }
+    } else if (selectedPart.startsWith('part-')) {
+      // Parte específica - solo palabras principales
+      const mainWords = words.filter(word => !word.optional);
+      const parts = generateLessonParts(vocabulario[selectedUnit] || []);
+      const selectedPartData = parts.find(part => part.id === selectedPart);
+      
+      if (selectedPartData) {
+        words = mainWords.slice(selectedPartData.start, selectedPartData.end);
+      }
     }
   }
   
