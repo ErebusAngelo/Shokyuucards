@@ -27,13 +27,13 @@ if [ ! -d ".git" ]; then
     echo "Clonando repositorio por primera vez..."
     git init
     git remote add origin "$REPO_URL"
-    git fetch origin main
-    git checkout -f main
+    git fetch origin master
+    git checkout -f master
 else
     echo "Actualizando repositorio..."
     git remote set-url origin "$REPO_URL"
-    git fetch origin main
-    git reset --hard origin/main
+    git fetch origin master
+    git reset --hard origin/master
 fi
 
 # 4. INSTALACION DE DEPENDENCIAS
