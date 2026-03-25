@@ -1,14 +1,14 @@
 /**
- * AuthSystem - Shokyuucards Global Identity Layer
- * Integrates with Fullscreen (FSC) SSO Ecosystem.
+ * AuthSystem - Shokyuucards Integrated Identity Layer
  */
 class AuthSystem {
     constructor() {
         this.container = document.getElementById('authContainer');
         this.status = document.getElementById('authStatus');
-        this.loginSection = document.getElementById('ssoLoginSection');
-        this.loginBtn = document.getElementById('btnFscLogin');
+        this.loginForm = document.getElementById('loginForm');
+        this.registerForm = document.getElementById('registerForm');
         this.mainApp = document.getElementById('mainApp');
+        this.errorMsg = document.getElementById('authError');
         
         this.user = null;
         this.init();
@@ -17,18 +17,22 @@ class AuthSystem {
     async init() {
         if (!this.container) return;
         
-        // 1. Mostrar contenedor con desenfoque suave
         this.container.style.display = 'flex';
         this.container.style.opacity = '1';
-        
-        // 2. Bypass para desarrollo local (Si así se desea en config)
-        if (window.config.isLocal) {
-            console.warn('🛠️ [MODO LOCAL] Saltando verificación de SSO para desarrollo.');
-            // Opcional: Descomentar lo siguiente para forzar login en local
-            // this.checkSession(); 
-            this.unlockApp('GUEST_DEV');
-            return;
-        }
+
+        // Listeners para cambiar entre login y registro
+        document.getElementById('toRegister').onclick = (e) => {
+            e.preventDefault();
+            this.showRegister();
+        };
+        document.getElementById('toLogin').onclick = (e) => {
+            e.preventDefault();
+            this.showLogin();
+        };
+
+        // Listeners de submit
+        this.loginForm.onsubmit = (e) => this.handleLogin(e);
+        this.registerForm.onsubmit = (e) => this.handleRegister(e);
 
         this.checkSession();
     }
@@ -40,67 +44,122 @@ class AuthSystem {
                 this.user = user;
                 this.unlockApp(user);
             } else {
-                this.showLoginPrompt();
+                this.showLogin();
             }
         } catch (error) {
-            console.error('Error en Identity Check:', error);
-            this.showError('No se pudo conectar con el servidor de identidad.');
+            this.showLogin();
         }
     }
 
     async verifySession() {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-
         try {
             const response = await fetch(`${window.API_URL}/me`, {
                 method: 'GET',
-                credentials: 'include',
-                signal: controller.signal
+                credentials: 'include'
             });
-            clearTimeout(timeoutId);
-            
             if (response.ok) {
                 const data = await response.json();
                 return data.user;
             }
             return null;
         } catch (error) {
-            clearTimeout(timeoutId);
             return null;
         }
     }
 
+    showLogin() {
+        this.status.classList.add('hidden');
+        this.registerForm.classList.add('hidden');
+        this.loginForm.classList.remove('hidden');
+        this.errorMsg.classList.add('hidden');
+    }
+
+    showRegister() {
+        this.status.classList.add('hidden');
+        this.loginForm.classList.add('hidden');
+        this.registerForm.classList.remove('hidden');
+        this.errorMsg.classList.add('hidden');
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginUser').value;
+        const password = document.getElementById('loginPass').value;
+
+        this.setLoading(true);
+        try {
+            const response = await fetch(`${window.API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                this.unlockApp(data.user);
+            } else {
+                this.showError(data.error || 'Fallo el inicio de sesión.');
+            }
+        } catch (error) {
+            this.showError('Error de conexión con el servidor.');
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
+    async handleRegister(e) {
+        e.preventDefault();
+        const username = document.getElementById('regUser').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPass').value;
+
+        this.setLoading(true);
+        try {
+            const response = await fetch(`${window.API_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                this.unlockApp(data.user);
+            } else {
+                this.showError(data.error || 'Fallo el registro.');
+            }
+        } catch (error) {
+            this.showError('Error de conexión con el servidor.');
+        } finally {
+            this.setLoading(false);
+        }
+    }
+
     unlockApp(user) {
-        // Animación de salida premium
         this.container.style.opacity = '0';
         setTimeout(() => {
             this.container.style.display = 'none';
             this.mainApp.classList.remove('auth-blur');
-            console.log('✅ Identidad Verificada:', user.username || 'Usuario FSC');
+            // Actualizar UI de bienvenida
+            const welcome = document.getElementById('welcomeUser');
+            if (welcome) welcome.textContent = `Bienvenido, ${user.username}`;
         }, 600);
     }
 
-    showLoginPrompt() {
-        if (this.status) this.status.classList.add('hidden');
-        if (this.loginSection) this.loginSection.classList.remove('hidden');
-        
-        if (this.loginBtn) {
-            this.loginBtn.onclick = () => {
-                window.location.href = window.AUTH_URL;
-            };
+    setLoading(isLoading) {
+        const btn = this.loginForm.querySelector('button');
+        const btnReg = this.registerForm.querySelector('button');
+        if (isLoading) {
+            if (btn) btn.disabled = true;
+            if (btnReg) btnReg.disabled = true;
+        } else {
+            if (btn) btn.disabled = false;
+            if (btnReg) btnReg.disabled = false;
         }
     }
 
     showError(msg) {
-        if (this.status) {
-            this.status.innerHTML = `<p style="color:#ff4444; font-weight:bold;">❌ ${msg}</p>`;
-        }
-        if (this.loginSection) this.loginSection.classList.remove('hidden');
-        if (this.loginBtn) {
-            this.loginBtn.textContent = 'Reintentar Acceso';
-            this.loginBtn.onclick = () => window.location.reload();
-        }
+        this.errorMsg.textContent = msg;
+        this.errorMsg.classList.remove('hidden');
     }
 }
 

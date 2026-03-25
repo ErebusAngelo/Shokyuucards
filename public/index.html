@@ -8,38 +8,58 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Sistema de Autenticación Centralizada FSC -->
+  <!-- FSC Identity Premium Overlay -->
+  <div id="authContainer" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <img src="https://fullscreencode.com/img/Imagotipo.png" alt="FSC" class="auth-logo">
+        <h2>Fullscreen Identity</h2>
+        <p>Shokyuu Cards Access</p>
+      </div>
+      <div class="auth-body">
+        <!-- Estado de carga -->
+        <div id="authStatus" class="auth-status-loading">
+          <div class="fsc-spinner"></div>
+          <p>Verificando sesión...</p>
+        </div>
+
+        <!-- Formulario de Login (Integrado) -->
+        <form id="loginForm" class="auth-form hidden">
+          <div class="form-group">
+            <input type="text" id="loginUser" placeholder="Usuario" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="loginPass" placeholder="Contraseña" required>
+          </div>
+          <button type="submit" class="btn-fsc-premium">Entrar</button>
+          <p class="switch-auth">¿No tienes cuenta? <a href="#" id="toRegister">Regístrate</a></p>
+        </form>
+
+        <!-- Formulario de Registro (Integrado) -->
+        <form id="registerForm" class="auth-form hidden">
+          <div class="form-group">
+            <input type="text" id="regUser" placeholder="Usuario" required>
+          </div>
+          <div class="form-group">
+            <input type="email" id="regEmail" placeholder="Correo electrónico" required>
+          </div>
+          <div class="form-group">
+            <input type="password" id="regPass" placeholder="Contraseña" required>
+          </div>
+          <button type="submit" class="btn-fsc-premium">Crear Cuenta</button>
+          <p class="switch-auth">¿Ya tienes cuenta? <a href="#" id="toLogin">Inicia sesión</a></p>
+        </form>
+
+        <div id="authError" class="auth-error-msg hidden"></div>
+      </div>
+      <div class="auth-footer">
+        <p>&copy; 2026 Fullscreen Code Solutions</p>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
-    <!-- Sistema de Autenticación Centralizada FSC -->
-    <!-- FSC Identity Premium Overlay -->
-    <div id="authContainer" class="auth-container">
-      <div class="auth-card">
-        <div class="auth-header">
-          <img src="https://fullscreencode.com/img/Imagotipo.png" alt="FSC" class="auth-logo">
-          <h2>Fullscreen Identity</h2>
-          <p>Shokyuu Cards Access</p>
-        </div>
-        <div class="auth-body">
-          <div id="authStatus" class="auth-status-loading">
-            <div class="fsc-spinner"></div>
-            <p>Verificando sesión...</p>
-          </div>
-          <div id="ssoLoginSection" class="hidden">
-            <p class="auth-intro">Esta aplicación requiere una cuenta activa en el ecosistema Fullscreen.</p>
-            <button id="btnFscLogin" class="btn-fsc-premium">
-              <span class="icon">🔑</span> Entrar con Fullscreen ID
-            </button>
-          </div>
-        </div>
-        <div class="auth-footer">
-          <p>&copy; 2026 Fullscreen Code Solutions</p>
-        </div>
-      </div>
-    </div>
-
-        <div id="authMessage" class="auth-message"></div>
-      </div>
-    </div>
-
     <!-- Aplicación Principal (con blur durante auth) -->
     <div id="mainApp" class="main-app auth-blur">
       <header>

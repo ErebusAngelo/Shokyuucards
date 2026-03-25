@@ -128,12 +128,85 @@ app.get(`${BASE_PATH}/api/config`, (req, res) => {
     });
 });
 
-// Redirección de Auth local a FSC SSO
-app.all([`${BASE_PATH}/api/login`, `${BASE_PATH}/api/register`], (req, res) => {
-    res.status(301).json({ 
-        message: 'La autenticación ahora es global.', 
-        redirect: 'https://fullscreencode.com/fscauth/' 
-    });
+// Login Integrado
+app.post(`${BASE_PATH}/api/login`, async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos.' });
+
+    try {
+        const db = await connectToDatabaseWrapper();
+        const user = await db.collection('users').findOne({ 
+            $or: [{ username: username }, { email: username }] 
+        });
+
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ error: 'Credenciales inválidas.' });
+        }
+
+        const token = jwt.sign(
+            { email: user.email, username: user.username }, 
+            JWT_SECRET, 
+            { expiresIn: '30d' }
+        );
+
+        // Galleta global para todo el ecosistema .fullscreencode.com
+        res.cookie('fsc_token', token, { 
+            httpOnly: true, 
+            secure: true, 
+            sameSite: 'Lax',
+            domain: '.fullscreencode.com', 
+            maxAge: 30 * 24 * 60 * 60 * 1000 
+        });
+
+        res.json({ success: true, user: { username: user.username, email: user.email } });
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// Registro Integrado
+app.post(`${BASE_PATH}/api/register`, async (req, res) => {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+
+    try {
+        const db = await connectToDatabaseWrapper();
+        
+        // Verificar si ya existe
+        const existing = await db.collection('users').findOne({ $or: [{ username }, { email }] });
+        if (existing) return res.status(400).json({ error: 'El usuario o email ya están registrados.' });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = {
+            username,
+            email,
+            password: hashedPassword,
+            role: 'user',
+            createdAt: new Date()
+        };
+
+        await db.collection('users').insertOne(newUser);
+
+        const token = jwt.sign(
+            { email: newUser.email, username: newUser.username }, 
+            JWT_SECRET, 
+            { expiresIn: '30d' }
+        );
+
+        res.cookie('fsc_token', token, { 
+            httpOnly: true, 
+            secure: true, 
+            sameSite: 'Lax',
+            domain: '.fullscreencode.com', 
+            maxAge: 30 * 24 * 60 * 60 * 1000 
+        });
+
+        res.json({ success: true, user: { username: newUser.username, email: newUser.email } });
+    } catch (error) {
+        console.error('Register Error:', error);
+        res.status(500).json({ error: 'Error al crear el usuario.' });
+    }
 });
 
 // Obtener mi perfil (Validación de sesión global)
