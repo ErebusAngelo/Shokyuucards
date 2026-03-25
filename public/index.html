@@ -13,16 +13,26 @@
     <div id="authContainer" class="auth-container">
       <div class="auth-box">
         <h1>Shokyuu Cards</h1>
+        <p class="auth-subtitle">Aprende japonés con el ecosistema Fullscreen</p>
+        
         <div id="authStatus" class="auth-status-loading">
           <div class="spinner"></div>
-          <p>Validando identidad en Fullscreen Identity...</p>
+          <p>Validando identidad...</p>
         </div>
+
+        <div id="ssoLoginSection" class="hidden">
+          <button id="btnFscLogin" class="btn-fsc-sso">
+            <img src="https://fullscreencode.com/img/Imagotipo.png" alt="FSC" class="fsc-logo-small">
+            Entrar con Fullscreen Identity
+          </button>
+        </div>
+
         <div id="authMessage" class="auth-message"></div>
       </div>
     </div>
 
-    <!-- Aplicación Principal (oculta inicialmente) -->
-    <div id="mainApp" class="main-app hidden">
+    <!-- Aplicación Principal (con blur durante auth) -->
+    <div id="mainApp" class="main-app auth-blur">
       <header>
         <div class="user-info">
           <span id="welcomeUser">Bienvenido, Usuario</span>

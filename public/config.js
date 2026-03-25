@@ -2,13 +2,15 @@ const CONFIG = {
     isLocal: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'),
     BASE_URL: '/shokyuucards',
     get API_URL() {
-        return `${window.location.origin}${this.BASE_URL}/api`;
+        // Fallback para desarrollo con Live Server (puerto 5501) hablando con backend (puerto 7500)
+        const host = (window.location.port === '5501') ? 'http://localhost:7500' : window.location.origin;
+        return `${host}${this.BASE_URL}/api`;
     },
     get SOCKET_URL() {
         return window.location.origin;
     },
     socketPath: '/shokyuucards/socket.io',
-    authUrl: 'https://fullscreencode.com/fscauth/login?redirect=' + encodeURIComponent(window.location.href),
+    authUrl: 'https://fullscreencode.com/fscauth/?redirect=' + encodeURIComponent(window.location.href),
     openaiApiKey: ''
 };
 

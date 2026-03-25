@@ -2,63 +2,80 @@
 class AuthSystem {
     constructor() {
         this.user = null;
-        this.init();
     }
 
     async init() {
         console.log('--- Iniciando Sistema de Identidad FSC ---');
-        
-        // El token ahora se gestiona vía Cookies de dominio .fullscreencode.com
-        // Intentamos validar la sesión con el backend
         const authenticated = await this.verifySession();
 
         if (authenticated) {
-            this.showMainApp();
-            this.setupEventListeners();
+            this.showAuthenticatedState();
         } else {
-            this.redirectToLogin();
+            this.showLoginPrompt();
         }
+
+        this.setupEventListeners();
     }
 
     async verifySession() {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         try {
             const response = await fetch(`${window.API_URL}/me`, {
                 method: 'GET',
-                credentials: 'include' // Obligatorio para enviar la cookie 'token'
+                credentials: 'include',
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             if (response.ok) {
                 const data = await response.json();
                 this.user = data.user;
-                this.updateUserInfo();
                 return true;
             }
             return false;
         } catch (error) {
+            clearTimeout(timeoutId);
             console.error('Error verificando sesión global:', error);
             return false;
         }
     }
 
-    redirectToLogin() {
-        // Redirigir al portal de autenticación central
+    showLoginPrompt() {
+        const authStatus = document.getElementById('authStatus');
+        const ssoSection = document.getElementById('ssoLoginSection');
+        const mainApp = document.getElementById('mainApp');
+
+        if (authStatus) authStatus.classList.add('hidden');
+        if (ssoSection) ssoSection.classList.remove('hidden');
+        if (mainApp) mainApp.classList.add('auth-blur');
+    }
+
+    handleSsoLogin() {
         window.location.href = window.AUTH_URL;
     }
 
+    showAuthenticatedState() {
+        const authContainer = document.getElementById('authContainer');
+        const mainApp = document.getElementById('mainApp');
+        
+        if (authContainer) authContainer.classList.add('hidden');
+        if (mainApp) mainApp.classList.remove('auth-blur');
+
+        this.updateUserInfo();
+    }
+
     setupEventListeners() {
-        // Solo necesitamos el botón de logout
+        const loginBtn = document.getElementById('btnFscLogin');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => this.handleSsoLogin());
+        }
+
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
         }
-    }
-
-    showMainApp() {
-        const authContainer = document.getElementById('authContainer');
-        const mainApp = document.getElementById('mainApp');
-        
-        if (authContainer) authContainer.style.display = 'none';
-        if (mainApp) mainApp.classList.remove('hidden');
     }
 
     updateUserInfo() {
@@ -69,12 +86,7 @@ class AuthSystem {
     }
 
     logout() {
-        // En un sistema SSO, el logout debe ser global
         window.location.href = 'https://fullscreencode.com/fscauth/logout?redirect=' + encodeURIComponent(window.location.href);
-    }
-
-    isAuthenticated() {
-        return !!this.user;
     }
 }
 

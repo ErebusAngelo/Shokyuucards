@@ -129,7 +129,7 @@ app.get(`${BASE_PATH}/api/config`, (req, res) => {
 app.all([`${BASE_PATH}/api/login`, `${BASE_PATH}/api/register`], (req, res) => {
     res.status(301).json({ 
         message: 'La autenticación ahora es global.', 
-        redirect: 'https://fullscreencode.com/fscauth/login' 
+        redirect: 'https://fullscreencode.com/fscauth/' 
     });
 });
 
