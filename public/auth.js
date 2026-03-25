@@ -1,25 +1,56 @@
-// Sistema de Autenticación Frontend - Integración FSC SSO
+/**
+ * AuthSystem - Shokyuucards Global Identity Layer
+ * Integrates with Fullscreen (FSC) SSO Ecosystem.
+ */
 class AuthSystem {
     constructor() {
+        this.container = document.getElementById('authContainer');
+        this.status = document.getElementById('authStatus');
+        this.loginSection = document.getElementById('ssoLoginSection');
+        this.loginBtn = document.getElementById('btnFscLogin');
+        this.mainApp = document.getElementById('mainApp');
+        
         this.user = null;
+        this.init();
     }
 
     async init() {
-        console.log('--- Iniciando Sistema de Identidad FSC ---');
-        const authenticated = await this.verifySession();
-
-        if (authenticated) {
-            this.showAuthenticatedState();
-        } else {
-            this.showLoginPrompt();
+        if (!this.container) return;
+        
+        // 1. Mostrar contenedor con desenfoque suave
+        this.container.style.display = 'flex';
+        this.container.style.opacity = '1';
+        
+        // 2. Bypass para desarrollo local (Si así se desea en config)
+        if (window.config.isLocal) {
+            console.warn('🛠️ [MODO LOCAL] Saltando verificación de SSO para desarrollo.');
+            // Opcional: Descomentar lo siguiente para forzar login en local
+            // this.checkSession(); 
+            this.unlockApp('GUEST_DEV');
+            return;
         }
 
-        this.setupEventListeners();
+        this.checkSession();
+    }
+
+    async checkSession() {
+        try {
+            const user = await this.verifySession();
+            if (user) {
+                this.user = user;
+                this.unlockApp(user);
+            } else {
+                this.showLoginPrompt();
+            }
+        } catch (error) {
+            console.error('Error en Identity Check:', error);
+            this.showError('No se pudo conectar con el servidor de identidad.');
+        }
     }
 
     async verifySession() {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         try {
             const response = await fetch(`${window.API_URL}/me`, {
@@ -28,71 +59,52 @@ class AuthSystem {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
-
+            
             if (response.ok) {
                 const data = await response.json();
-                this.user = data.user;
-                return true;
+                return data.user;
             }
-            return false;
+            return null;
         } catch (error) {
             clearTimeout(timeoutId);
-            console.error('Error verificando sesión global:', error);
-            return false;
+            return null;
         }
+    }
+
+    unlockApp(user) {
+        // Animación de salida premium
+        this.container.style.opacity = '0';
+        setTimeout(() => {
+            this.container.style.display = 'none';
+            this.mainApp.classList.remove('auth-blur');
+            console.log('✅ Identidad Verificada:', user.username || 'Usuario FSC');
+        }, 600);
     }
 
     showLoginPrompt() {
-        const authStatus = document.getElementById('authStatus');
-        const ssoSection = document.getElementById('ssoLoginSection');
-        const mainApp = document.getElementById('mainApp');
-
-        if (authStatus) authStatus.classList.add('hidden');
-        if (ssoSection) ssoSection.classList.remove('hidden');
-        if (mainApp) mainApp.classList.add('auth-blur');
-    }
-
-    handleSsoLogin() {
-        window.location.href = window.AUTH_URL;
-    }
-
-    showAuthenticatedState() {
-        const authContainer = document.getElementById('authContainer');
-        const mainApp = document.getElementById('mainApp');
+        if (this.status) this.status.classList.add('hidden');
+        if (this.loginSection) this.loginSection.classList.remove('hidden');
         
-        if (authContainer) authContainer.classList.add('hidden');
-        if (mainApp) mainApp.classList.remove('auth-blur');
-
-        this.updateUserInfo();
-    }
-
-    setupEventListeners() {
-        const loginBtn = document.getElementById('btnFscLogin');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => this.handleSsoLogin());
-        }
-
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => this.logout());
+        if (this.loginBtn) {
+            this.loginBtn.onclick = () => {
+                window.location.href = window.AUTH_URL;
+            };
         }
     }
 
-    updateUserInfo() {
-        const welcomeUser = document.getElementById('welcomeUser');
-        if (welcomeUser && this.user) {
-            welcomeUser.textContent = `Bienvenido, ${this.user.username || this.user.email}`;
+    showError(msg) {
+        if (this.status) {
+            this.status.innerHTML = `<p style="color:#ff4444; font-weight:bold;">❌ ${msg}</p>`;
         }
-    }
-
-    logout() {
-        window.location.href = 'https://fullscreencode.com/fscauth/logout?redirect=' + encodeURIComponent(window.location.href);
+        if (this.loginSection) this.loginSection.classList.remove('hidden');
+        if (this.loginBtn) {
+            this.loginBtn.textContent = 'Reintentar Acceso';
+            this.loginBtn.onclick = () => window.location.reload();
+        }
     }
 }
 
-// Inicializar el sistema de autenticación cuando se carga la página
-let authSystem;
+// Iniciar sistema
 document.addEventListener('DOMContentLoaded', () => {
-    authSystem = new AuthSystem();
-    authSystem.init();
+    window.authSystem = new AuthSystem();
 });

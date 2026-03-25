@@ -22,7 +22,7 @@ echo [1/2] DESPLEGANDO EN EL VPS (!VPS_HOST!) POR SSH...
 echo.
 set "REPO_URL=https://!GITHUB_TOKEN!@github.com/!GITHUB_REPO!"
 
-ssh -p !VPS_PORT! !VPS_USER!@!VPS_HOST! "mkdir -p shokyuucards && cd shokyuucards && git remote set-url origin !REPO_URL! 2>/dev/null || (git init && git remote add origin !REPO_URL!) && echo 'Bajando cambios al VPS...' && git fetch origin main && git reset --hard origin/main && echo 'Corriendo el deploy de backend...' && bash deploy_scripts/server_update.sh"
+ssh -p !VPS_PORT! !VPS_USER!@!VPS_HOST! "mkdir -p shokyuucards && cd shokyuucards && git remote set-url origin !REPO_URL! 2>/dev/null || (git init && git remote add origin !REPO_URL!) && echo 'Bajando cambios al VPS...' && git fetch origin master && git reset --hard origin/master && echo 'Corriendo el deploy de backend...' && bash deploy_scripts/server_update.sh"
 
 echo.
 echo [2/2] SUBIENDO ARCHIVOS DE FRONTEND AL FTP (!FTP_HOST!)...

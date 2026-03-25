@@ -10,22 +10,31 @@
 <body>
   <div class="app">
     <!-- Sistema de Autenticación Centralizada FSC -->
+    <!-- FSC Identity Premium Overlay -->
     <div id="authContainer" class="auth-container">
-      <div class="auth-box">
-        <h1>Shokyuu Cards</h1>
-        <p class="auth-subtitle">Aprende japonés con el ecosistema Fullscreen</p>
-        
-        <div id="authStatus" class="auth-status-loading">
-          <div class="spinner"></div>
-          <p>Validando identidad...</p>
+      <div class="auth-card">
+        <div class="auth-header">
+          <img src="https://fullscreencode.com/img/Imagotipo.png" alt="FSC" class="auth-logo">
+          <h2>Fullscreen Identity</h2>
+          <p>Shokyuu Cards Access</p>
         </div>
-
-        <div id="ssoLoginSection" class="hidden">
-          <button id="btnFscLogin" class="btn-fsc-sso">
-            <img src="https://fullscreencode.com/img/Imagotipo.png" alt="FSC" class="fsc-logo-small">
-            Entrar con Fullscreen Identity
-          </button>
+        <div class="auth-body">
+          <div id="authStatus" class="auth-status-loading">
+            <div class="fsc-spinner"></div>
+            <p>Verificando sesión...</p>
+          </div>
+          <div id="ssoLoginSection" class="hidden">
+            <p class="auth-intro">Esta aplicación requiere una cuenta activa en el ecosistema Fullscreen.</p>
+            <button id="btnFscLogin" class="btn-fsc-premium">
+              <span class="icon">🔑</span> Entrar con Fullscreen ID
+            </button>
+          </div>
         </div>
+        <div class="auth-footer">
+          <p>&copy; 2026 Fullscreen Code Solutions</p>
+        </div>
+      </div>
+    </div>
 
         <div id="authMessage" class="auth-message"></div>
       </div>

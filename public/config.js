@@ -2,9 +2,15 @@ const CONFIG = {
     isLocal: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'),
     BASE_URL: '/shokyuucards',
     get API_URL() {
-        // Fallback para desarrollo con Live Server (puerto 5501) hablando con backend (puerto 7500)
-        const host = (window.location.port === '5501') ? 'http://localhost:7500' : window.location.origin;
-        return `${host}${this.BASE_URL}/api`;
+        // En producción (Fullscreencode o Dattaweb), usamos ruta relativa
+        const isProdHost = window.location.hostname === 'fullscreencode.com' || window.location.hostname.includes('dattaweb.com');
+        if (isProdHost) return `${this.BASE_URL}/api`;
+        
+        // En local con Live Server (5501), apuntamos al backend en 7500
+        if (window.location.port === '5501') return `http://localhost:7500${this.BASE_URL}/api`;
+        
+        // Por defecto ruta relativa
+        return `${this.BASE_URL}/api`;
     },
     get SOCKET_URL() {
         return window.location.origin;

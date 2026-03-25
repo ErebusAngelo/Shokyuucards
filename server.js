@@ -8,12 +8,9 @@ const { connectToDatabase, closeConnection } = require('./db');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-
-// Configuración de Identidad FSC
-const PORT = process.env.PORT || 7500;
 const BASE_PATH = process.env.BASE_PATH || '/shokyuucards';
-const JWT_SECRET = process.env.JWT_SECRET; // Debe venir de .env global
+const PORT = process.env.PORT || 7500;
+const JWT_SECRET = process.env.JWT_SECRET || 'arte_digital_data_jwt_secret_2024_secure'; // Sincronizado con Ecosistema FSC
 const NODE_ENV = process.env.NODE_ENV || 'local';
 
 // Configuración de Socket.io adaptada a FSC
@@ -104,13 +101,19 @@ app.get('/', (req, res) => {
 // RUTAS DE IDENTIDAD Y API
 // ==========================================
 
-// Estado del servidor
-app.get(`${BASE_PATH}/api/status`, (req, res) => {
+// Estado del servidor (Público)
+app.get(`${BASE_PATH}/api/health`, (req, res) => {
+    res.json({ status: 'ok', environment: NODE_ENV });
+});
+
+// Estado detallado
+app.get(`${BASE_PATH}/api/status`, authenticateToken, (req, res) => {
     res.json({ 
         status: 'active',
-        version: '1.1.0',
+        version: '1.2.0',
         environment: NODE_ENV,
         app: 'Shokyuu Cards FSC',
+        user: req.user,
         timestamp: new Date().toISOString()
     });
 });
@@ -190,7 +193,12 @@ io.on('connection', (socket) => {
 // Iniciar el servidor
 async function startServer() {
     try {
-        await connectToDatabaseWrapper();
+        // Intentar conectar a la base de datos pero no morir si falla (útil en desarrollo)
+        try {
+            await connectToDatabaseWrapper();
+        } catch (dbError) {
+            console.error('⚠️ [DB ADVERTENCIA] No se pudo conectar a MongoDB. El servidor funcionará en modo limitado (sin persistencia).');
+        }
         
         http.listen(PORT, () => {
             console.log('\n🚀 ===== SERVIDOR SHOKYUU CARDS (FSC) INICIADO =====');
@@ -203,12 +211,12 @@ async function startServer() {
 
         process.on('SIGINT', async () => {
             console.log('\n🛑 Cerrando servidor...');
-            await closeConnection();
+            try { await closeConnection(); } catch (e) {}
             process.exit(0);
         });
 
     } catch (error) {
-        console.error('❌ Error al iniciar el servidor:', error);
+        console.error('❌ Error fatal al iniciar el servidor:', error);
         process.exit(1);
     }
 }
