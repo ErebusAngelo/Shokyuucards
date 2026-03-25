@@ -94,4 +94,5 @@ class AuthSystem {
 let authSystem;
 document.addEventListener('DOMContentLoaded', () => {
     authSystem = new AuthSystem();
+    authSystem.init();
 });
