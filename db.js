@@ -1,30 +1,24 @@
 const { MongoClient } = require('mongodb');
 
-// Configuración de MongoDB
-const MONGODB_CONFIG = {
-    local: {
-        uri: 'mongodb://localhost:27017',
-        dbName: 'shokyuucards_local'
-    },
-    production: {
-        uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
-        dbName: process.env.MONGODB_DB_NAME || 'shokyuucards_prod'
-    }
+require('dotenv').config();
+
+// Configuración de MongoDB basada en estándares FSC
+const config = {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
+    dbName: process.env.MONGODB_DB_NAME || 'shokyuucards_prod'
 };
 
 let client = null;
 let db = null;
 
-async function connectToDatabase(isLocal = true) {
+async function connectToDatabase() {
     try {
         if (db) {
             console.log('Reutilizando conexión existente a MongoDB');
             return db;
         }
-
-        const config = isLocal ? MONGODB_CONFIG.local : MONGODB_CONFIG.production;
-        
-        console.log(`Conectando a MongoDB (${isLocal ? 'local' : 'producción'})...`);
+ 
+        console.log(`Conectando a MongoDB...`);
         console.log(`URI: ${config.uri}`);
         console.log(`Base de datos: ${config.dbName}`);
 

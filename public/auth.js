@@ -1,236 +1,80 @@
-// Sistema de Autenticación Frontend
+// Sistema de Autenticación Frontend - Integración FSC SSO
 class AuthSystem {
     constructor() {
-        this.token = localStorage.getItem('authToken');
         this.user = null;
         this.init();
     }
 
-    init() {
-        // MODO DEBUG: Saltar autenticación temporalmente
-        console.log('🔧 MODO DEBUG: Autenticación deshabilitada temporalmente');
-        this.user = { username: 'Debug User', email: 'debug@test.com' };
-        this.updateUserInfo();
-        this.showMainApp();
-        this.setupEventListeners();
-        return;
+    async init() {
+        console.log('--- Iniciando Sistema de Identidad FSC ---');
+        
+        // El token ahora se gestiona vía Cookies de dominio .fullscreencode.com
+        // Intentamos validar la sesión con el backend
+        const authenticated = await this.verifySession();
 
-        // Código original comentado para debug
-        /*
-        // Verificar si ya hay una sesión activa
-        if (this.token) {
-            this.verifyToken();
+        if (authenticated) {
+            this.showMainApp();
+            this.setupEventListeners();
         } else {
-            this.showAuthContainer();
+            this.redirectToLogin();
         }
-
-        this.setupEventListeners();
-        */
     }
 
-    setupEventListeners() {
-        // Cambiar entre formularios
-        document.getElementById('showRegister').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showRegisterForm();
-        });
-
-        document.getElementById('showLogin').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLoginForm();
-        });
-
-        // Formularios
-        document.getElementById('loginFormElement').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        document.getElementById('registerFormElement').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleRegister();
-        });
-
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            this.logout();
-        });
-    }
-
-    showAuthContainer() {
-        document.getElementById('authContainer').style.display = 'flex';
-        document.getElementById('mainApp').classList.add('hidden');
-    }
-
-    showMainApp() {
-        document.getElementById('authContainer').style.display = 'none';
-        document.getElementById('mainApp').classList.remove('hidden');
-    }
-
-    showLoginForm() {
-        document.getElementById('loginForm').classList.add('active');
-        document.getElementById('registerForm').classList.remove('active');
-        this.clearMessage();
-    }
-
-    showRegisterForm() {
-        document.getElementById('registerForm').classList.add('active');
-        document.getElementById('loginForm').classList.remove('active');
-        this.clearMessage();
-    }
-
-    showMessage(message, type = 'error') {
-        const messageEl = document.getElementById('authMessage');
-        messageEl.textContent = message;
-        messageEl.className = `auth-message ${type}`;
-    }
-
-    clearMessage() {
-        const messageEl = document.getElementById('authMessage');
-        messageEl.className = 'auth-message';
-        messageEl.textContent = '';
-    }
-
-    async handleLogin() {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-
-        if (!username || !password) {
-            this.showMessage('Por favor, completa todos los campos');
-            return;
-        }
-
+    async verifySession() {
         try {
-            const response = await fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                this.token = data.token;
-                this.user = data.user;
-                localStorage.setItem('authToken', this.token);
-                this.showMessage('¡Inicio de sesión exitoso!', 'success');
-                
-                setTimeout(() => {
-                    this.updateUserInfo();
-                    this.showMainApp();
-                }, 1000);
-            } else {
-                this.showMessage(data.message || 'Error al iniciar sesión');
-            }
-        } catch (error) {
-            console.error('Error de login:', error);
-            this.showMessage('Error de conexión. Intenta nuevamente.');
-        }
-    }
-
-    async handleRegister() {
-        const username = document.getElementById('registerUsername').value;
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
-        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-
-        if (!username || !email || !password || !passwordConfirm) {
-            this.showMessage('Por favor, completa todos los campos');
-            return;
-        }
-
-        if (password !== passwordConfirm) {
-            this.showMessage('Las contraseñas no coinciden');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showMessage('La contraseña debe tener al menos 6 caracteres');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                this.showMessage('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.', 'success');
-                setTimeout(() => {
-                    this.showLoginForm();
-                    document.getElementById('registerFormElement').reset();
-                }, 2000);
-            } else {
-                this.showMessage(data.message || 'Error al crear la cuenta');
-            }
-        } catch (error) {
-            console.error('Error de registro:', error);
-            this.showMessage('Error de conexión. Intenta nuevamente.');
-        }
-    }
-
-    async verifyToken() {
-        try {
-            const response = await fetch(`${API_URL}/me`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
+            const response = await fetch(`${window.API_URL}/me`, {
+                method: 'GET',
+                credentials: 'include' // Obligatorio para enviar la cookie 'token'
             });
 
             if (response.ok) {
                 const data = await response.json();
                 this.user = data.user;
                 this.updateUserInfo();
-                this.showMainApp();
-            } else {
-                this.logout();
+                return true;
             }
+            return false;
         } catch (error) {
-            console.error('Error verificando token:', error);
-            this.logout();
+            console.error('Error verificando sesión global:', error);
+            return false;
         }
     }
 
+    redirectToLogin() {
+        // Redirigir al portal de autenticación central
+        window.location.href = window.AUTH_URL;
+    }
+
+    setupEventListeners() {
+        // Solo necesitamos el botón de logout
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
+    }
+
+    showMainApp() {
+        const authContainer = document.getElementById('authContainer');
+        const mainApp = document.getElementById('mainApp');
+        
+        if (authContainer) authContainer.style.display = 'none';
+        if (mainApp) mainApp.classList.remove('hidden');
+    }
+
     updateUserInfo() {
-        if (this.user) {
-            document.getElementById('welcomeUser').textContent = `Bienvenido, ${this.user.username}`;
+        const welcomeUser = document.getElementById('welcomeUser');
+        if (welcomeUser && this.user) {
+            welcomeUser.textContent = `Bienvenido, ${this.user.username || this.user.email}`;
         }
     }
 
     logout() {
-        this.token = null;
-        this.user = null;
-        localStorage.removeItem('authToken');
-        this.showAuthContainer();
-        this.clearMessage();
-        
-        // Limpiar formularios
-        document.getElementById('loginFormElement').reset();
-        document.getElementById('registerFormElement').reset();
-        this.showLoginForm();
-    }
-
-    getAuthHeaders() {
-        return {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json'
-        };
+        // En un sistema SSO, el logout debe ser global
+        window.location.href = 'https://fullscreencode.com/fscauth/logout?redirect=' + encodeURIComponent(window.location.href);
     }
 
     isAuthenticated() {
-        // MODO DEBUG: Siempre autenticado
-        return true;
-        
-        // Código original comentado para debug
-        // return !!this.token;
+        return !!this.user;
     }
 }
 

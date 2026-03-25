@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando servidor Shokyuu Cards en modo desarrollo (FSC)...
+npm run dev

@@ -18,7 +18,7 @@
   --gradient-card: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
 }
 
-/* Estilos para el Sistema de Autenticación */
+/* Estilos para el Sistema de Autenticación Centralizada FSC */
 .auth-container {
   display: flex;
   align-items: center;
@@ -37,6 +37,25 @@
   max-width: 450px;
   box-shadow: 0 20px 40px var(--shadow);
   text-align: center;
+}
+
+.auth-status-loading {
+  margin-top: 2rem;
+  color: var(--text-primary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-left-color: var(--text-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .auth-box h1 {
