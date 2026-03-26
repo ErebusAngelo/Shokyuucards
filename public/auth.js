@@ -42,9 +42,7 @@ class AuthSystem {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('admin')) {
             const userField = document.getElementById('loginUser');
-            const passField = document.getElementById('loginPass');
             if (userField) userField.value = 'Adim';
-            if (passField) passField.value = 'vamos susan';
             this.showLogin();
         }
 
