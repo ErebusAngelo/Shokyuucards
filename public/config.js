@@ -2,9 +2,9 @@ const CONFIG = {
     isLocal: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'),
     BASE_URL: '/shokyuucards',
     get API_URL() {
-        // En producción (Fullscreencode o Dattaweb), usamos ruta relativa
+        // En producción (Fullscreencode o Dattaweb), apuntamos al NGINX del VPS (puerto 443 oculto)
         const isProdHost = window.location.hostname === 'fullscreencode.com' || window.location.hostname.includes('dattaweb.com');
-        if (isProdHost) return `${this.BASE_URL}/api`;
+        if (isProdHost) return `https://vps-4455523-x.dattaweb.com${this.BASE_URL}/api`;
         
         // En local con Live Server (5501), apuntamos al backend en 7500
         if (window.location.port === '5501') return `http://localhost:7500${this.BASE_URL}/api`;
@@ -13,6 +13,9 @@ const CONFIG = {
         return `${this.BASE_URL}/api`;
     },
     get SOCKET_URL() {
+        const isProdHost = window.location.hostname === 'fullscreencode.com' || window.location.hostname.includes('dattaweb.com');
+        if (isProdHost) return `https://vps-4455523-x.dattaweb.com`;
+        
         return window.location.origin;
     },
     socketPath: '/shokyuucards/socket.io',
