@@ -6,8 +6,8 @@ const CONFIG = {
         const isProdHost = window.location.hostname === 'fullscreencode.com' || window.location.hostname.includes('dattaweb.com');
         if (isProdHost) return `https://vps-4455523-x.dattaweb.com${this.BASE_URL}/api`;
         
-        // En local con Live Server (5501), apuntamos al backend en 7500
-        if (window.location.port === '5501') return `http://localhost:7500${this.BASE_URL}/api`;
+        // En modo local (XAMPP o Live Server), SIEMPRE apuntamos al puerto 7500 backend
+        if (this.isLocal) return `http://localhost:7500${this.BASE_URL}/api`;
         
         // Por defecto ruta relativa
         return `${this.BASE_URL}/api`;

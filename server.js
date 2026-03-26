@@ -137,13 +137,15 @@ app.get('/', (req, res) => {
 // RUTAS DE IDENTIDAD Y API
 // ==========================================
 
+const apiRouter = express.Router();
+
 // Estado del servidor (Público)
-app.get(`${BASE_PATH}/api/health`, (req, res) => {
+apiRouter.get(`/api/health`, (req, res) => {
     res.json({ status: 'ok', environment: NODE_ENV });
 });
 
 // Estado detallado
-app.get(`${BASE_PATH}/api/status`, authenticateToken, (req, res) => {
+apiRouter.get(`/api/status`, authenticateToken, (req, res) => {
     res.json({ 
         status: 'active',
         version: '1.2.0',
@@ -155,7 +157,7 @@ app.get(`${BASE_PATH}/api/status`, authenticateToken, (req, res) => {
 });
 
 // Configuración del cliente
-app.get(`${BASE_PATH}/api/config`, (req, res) => {
+apiRouter.get(`/api/config`, (req, res) => {
     res.json({
         isLocal: NODE_ENV === 'local',
         basePath: BASE_PATH,
@@ -165,7 +167,7 @@ app.get(`${BASE_PATH}/api/config`, (req, res) => {
 });
 
 // Login Integrado
-app.post(`${BASE_PATH}/api/login`, async (req, res) => {
+apiRouter.post(`/api/login`, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Usuario y contraseña requeridos.' });
 
@@ -206,7 +208,7 @@ app.post(`${BASE_PATH}/api/login`, async (req, res) => {
 });
 
 // Registro Integrado
-app.post(`${BASE_PATH}/api/register`, async (req, res) => {
+apiRouter.post(`/api/register`, async (req, res) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
 
@@ -254,7 +256,7 @@ app.post(`${BASE_PATH}/api/register`, async (req, res) => {
 });
 
 // Obtener mi perfil (Validación de sesión global)
-app.get(`${BASE_PATH}/api/me`, authenticateToken, async (req, res) => {
+apiRouter.get(`/api/me`, authenticateToken, async (req, res) => {
     try {
         // En FSC, el token ya trae el email y username.
         // Si necesitamos más info, consultamos fullscreen_global.users
@@ -276,7 +278,7 @@ app.get(`${BASE_PATH}/api/me`, authenticateToken, async (req, res) => {
 });
 
 // Rutas de Administración
-app.get(`${BASE_PATH}/api/admin/users`, authenticateToken, async (req, res) => {
+apiRouter.get(`/api/admin/users`, authenticateToken, async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const users = await db.collection('users')
@@ -290,6 +292,10 @@ app.get(`${BASE_PATH}/api/admin/users`, authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
+// Registrar routers para evadir NGINX strip behavior
+app.use(BASE_PATH, apiRouter);
+app.use('/', apiRouter);
 
 // ==========================================
 // CONFIGURACIÓN DE SOCKET.IO
