@@ -205,7 +205,7 @@ apiRouter.post(`/api/login`, async (req, res) => {
 
         res.cookie('fsc_token', token, cookieOptions);
 
-        res.json({ success: true, user: { username: user.username, email: user.email } });
+        res.json({ success: true, user: { username: user.username, email: user.email }, token });
     } catch (error) {
         console.error('Login Error:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
@@ -253,7 +253,7 @@ apiRouter.post(`/api/register`, async (req, res) => {
 
         res.cookie('fsc_token', token, cookieOptions);
 
-        res.json({ success: true, user: { username: newUser.username, email: newUser.email } });
+        res.json({ success: true, user: { username: newUser.username, email: newUser.email }, token });
     } catch (error) {
         console.error('Register Error:', error);
         res.status(500).json({ error: 'Error al crear el usuario.' });
