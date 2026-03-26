@@ -86,6 +86,11 @@ class CommunityManager {
     }
 
     async publishDeck(localDeckName) {
+        if (!window.authSystem || !window.authSystem.user) {
+            alert('🔒 Debes iniciar sesión con tu cuenta para poder publicar mazos en la comunidad y que la gente te identifique como el autor!');
+            return;
+        }
+
         if (!window.customDecksManager || !window.customDecksManager.customDecks[localDeckName]) {
             alert('El mazo local no existe.');
             return;
