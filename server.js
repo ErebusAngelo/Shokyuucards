@@ -36,7 +36,9 @@ app.use(cors({
         "https://vps-4455523-x.dattaweb.com",
         "http://localhost:3000",
         "http://localhost:5173",
-        "http://localhost:7500"
+        "http://localhost:7500",
+        "http://localhost:5501",
+        "http://127.0.0.1:5501"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true // INDISPENSABLE para leer las cookies de fscauth
@@ -45,25 +47,25 @@ app.use(cors({
 let db = null;
 
 // Fallback in-memory para desarrollo local si falla MongoDB
+const mockUsers = [];
 const mockDB = {
-    users: [],
     collection: function(name) {
         if (name === 'users') {
             return {
                 findOne: async (query) => {
                     const keys = Object.keys(query);
                     if (keys.includes('$or')) {
-                        return this.users.find(u => 
+                        return mockUsers.find(u => 
                             u.username === query.$or[0].username || 
                             u.email === query.$or[1].email
                         ) || null;
                     }
-                    if (query.username) return this.users.find(u => u.username === query.username) || null;
-                    if (query.email) return this.users.find(u => u.email === query.email) || null;
+                    if (query.username) return mockUsers.find(u => u.username === query.username) || null;
+                    if (query.email) return mockUsers.find(u => u.email === query.email) || null;
                     return null;
                 },
                 insertOne: async (doc) => {
-                    this.users.push({...doc, _id: 'mock-id-' + Date.now()});
+                    mockUsers.push({...doc, _id: 'mock-id-' + Date.now()});
                     return { insertedId: 'mock-id-' + Date.now() };
                 }
             };
@@ -103,7 +105,7 @@ app.use((req, res, next) => {
 function authenticateToken(req, res, next) {
     // 1. Intentar obtener token de la cookie (Estándar .fullscreencode.com)
     // 2. Intentar obtener token del header Authorization (Bearer)
-    const token = req.cookies.token || (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
+    const token = req.cookies.fsc_token || req.cookies.token || (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
 
     if (!token) {
         return res.status(401).json({ error: 'Acceso denegado. Se requiere autenticación global FSC.' });
@@ -183,14 +185,18 @@ app.post(`${BASE_PATH}/api/login`, async (req, res) => {
             { expiresIn: '30d' }
         );
 
-        // Galleta global para todo el ecosistema .fullscreencode.com
-        res.cookie('fsc_token', token, { 
+        // Galleta global opcional dependiendo de entorno local
+        const cookieOptions = { 
             httpOnly: true, 
-            secure: true, 
+            secure: NODE_ENV !== 'local', 
             sameSite: 'Lax',
-            domain: '.fullscreencode.com', 
             maxAge: 30 * 24 * 60 * 60 * 1000 
-        });
+        };
+        if (NODE_ENV !== 'local') {
+            cookieOptions.domain = '.fullscreencode.com';
+        }
+
+        res.cookie('fsc_token', token, cookieOptions);
 
         res.json({ success: true, user: { username: user.username, email: user.email } });
     } catch (error) {
@@ -228,13 +234,17 @@ app.post(`${BASE_PATH}/api/register`, async (req, res) => {
             { expiresIn: '30d' }
         );
 
-        res.cookie('fsc_token', token, { 
+        const cookieOptions = { 
             httpOnly: true, 
-            secure: true, 
+            secure: NODE_ENV !== 'local', 
             sameSite: 'Lax',
-            domain: '.fullscreencode.com', 
             maxAge: 30 * 24 * 60 * 60 * 1000 
-        });
+        };
+        if (NODE_ENV !== 'local') {
+            cookieOptions.domain = '.fullscreencode.com';
+        }
+
+        res.cookie('fsc_token', token, cookieOptions);
 
         res.json({ success: true, user: { username: newUser.username, email: newUser.email } });
     } catch (error) {

@@ -91,6 +91,7 @@ class AuthSystem {
             const response = await fetch(`${window.API_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ username, password })
             });
 
@@ -118,6 +119,7 @@ class AuthSystem {
             const response = await fetch(`${window.API_URL}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ username, email, password })
             });
 
