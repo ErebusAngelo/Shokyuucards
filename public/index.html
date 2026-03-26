@@ -6,6 +6,7 @@
   <title>Tarjetas de Vocabulario - Shokyuu 1</title>
   <link rel="icon" type="image/svg+xml" href="favicon.ico" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="community.css" />
 </head>
 <body>
   <!-- Sistema de Autenticación Centralizada FSC -->
@@ -69,10 +70,11 @@
         </div>
         <h1>Vocabulario - Shokyuu 1</h1>
       
-      <!-- Tabs para lecciones regulares -->
+      <!-- Tabs para lecciones regulares/mazos/comunidad -->
       <div class="tabs">
         <button id="tabLessons" class="tab-btn active">Lecciones</button>
         <button id="tabCustomDecks" class="tab-btn">📚 Mis Mazos</button>
+        <button id="tabCommunity" class="tab-btn">🌍 Comunidad</button>
         <a href="matching-game.html" class="tab-btn tab-game">🎯 Emparejamiento</a>
       </div>
 
@@ -230,6 +232,20 @@
           </div>
         </div>
 
+        <!-- Panel de Comunidad -->
+        <div id="panelCommunity" class="tab-panel">
+          <div class="custom-decks-container">
+            <div class="deck-manager-header">
+              <h3>Mazos de la Comunidad</h3>
+              <p>Descubre y apoya los excelentes mazos creados por otros estudiantes.</p>
+            </div>
+            <div class="decks-list" id="communityDecksList">
+              <div class="fsc-spinner"></div>
+              <p style="text-align: center; margin-top: 1rem;">Cargando mazos de la comunidad...</p>
+            </div>
+          </div>
+        </div>
+
       <div class="start-section">
         <button id="btnStart">Comenzar</button>
       </div>
@@ -272,6 +288,7 @@
   <script src="data.js"></script>
   <script src="romaji-converter.js"></script>
   <script src="custom-decks.js"></script>
+  <script src="community.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,85 @@
+/* ================== COMUNIDAD ================== */
+.community-deck-card {
+  display: flex !important;
+  flex-direction: column;
+  gap: 10px;
+}
+.deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+.deck-creator {
+  font-size: 0.8rem;
+  color: #00ffff;
+  font-style: italic;
+}
+.community-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+.vote-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+.btn-vote {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+.btn-vote:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.btn-vote.active-up {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.2);
+}
+.btn-vote.active-down {
+  color: #ff3366;
+  background: rgba(255, 51, 102, 0.2);
+}
+.score {
+  font-weight: bold;
+  min-width: 25px;
+  text-align: center;
+}
+.positive-score {
+  color: #00ff88;
+}
+.negative-score {
+  color: #ff3366;
+}
+.btn-download {
+  background: rgba(0, 255, 255, 0.2);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-download:hover {
+  background: #00ffff;
+  color: #0a0a0a;
+}
+.btn-publish {
+  background-color: #6a0dad !important;
+  color: white !important;
+}
+.btn-publish:hover {
+  background-color: #8b00ff !important;
+}

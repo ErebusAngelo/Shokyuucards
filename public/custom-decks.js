@@ -167,6 +167,7 @@ class CustomDecksManager {
           <div class="deck-actions">
             <button class="btn-use" onclick="customDecksManager.useDeck('${deckName}')">Usar</button>
             <button class="btn-edit" onclick="customDecksManager.editDeck('${deckName}')">Editar</button>
+            <button class="btn-publish" onclick="window.communityManager.publishDeck('${deckName}')">🌐 Publicar</button>
             <button class="btn-delete" onclick="customDecksManager.deleteDeck('${deckName}')">Eliminar</button>
           </div>
         </div>

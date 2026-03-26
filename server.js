@@ -74,7 +74,8 @@ const mockDB = {
         return {
             findOne: async () => null,
             find: () => ({ toArray: async () => [] }),
-            insertOne: async () => ({ insertedId: 'mock-id-12345' })
+            insertOne: async () => ({ insertedId: 'mock-id-12345' }),
+            updateOne: async () => ({})
         };
     }
 };
@@ -290,6 +291,97 @@ apiRouter.get(`/api/admin/users`, authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Error obteniendo usuarios:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// ==========================================
+// COMUNIDAD (MAZOS PÚBLICOS)
+// ==========================================
+
+// Publicar o actualizar un mazo en la comunidad
+apiRouter.post(`/api/decks/publish`, authenticateToken, async (req, res) => {
+    const { name, cards } = req.body;
+    if (!name || !cards || !cards.length) return res.status(400).json({ error: 'Nombre y cartas son requeridos.' });
+
+    try {
+        const db = await connectToDatabaseWrapper();
+        const existing = await db.collection('decks').findOne({ name, creatorEmail: req.user.email });
+        
+        if (existing) {
+            await db.collection('decks').updateOne(
+                { _id: existing._id }, 
+                { $set: { cards, updatedAt: new Date() } }
+            );
+            return res.json({ success: true, message: 'Mazo actualizado en la comunidad.' });
+        }
+
+        const newDeck = {
+            name,
+            cards,
+            creatorEmail: req.user.email,
+            creatorUsername: req.user.username,
+            upvotes: [],
+            downvotes: [],
+            createdAt: new Date()
+        };
+        await db.collection('decks').insertOne(newDeck);
+        res.json({ success: true, message: 'Mazo publicado exitosamente.' });
+    } catch (error) {
+        console.error('Error publicando mazo:', error);
+        res.status(500).json({ error: 'Error del servidor.' });
+    }
+});
+
+// Obtener todos los mazos comunitarios
+apiRouter.get(`/api/decks/community`, async (req, res) => {
+    try {
+        const db = await connectToDatabaseWrapper();
+        const decks = await db.collection('decks').find({}).toArray();
+        decks.sort((a, b) => {
+            const scoreA = (a.upvotes?.length || 0) - (a.downvotes?.length || 0);
+            const scoreB = (b.upvotes?.length || 0) - (b.downvotes?.length || 0);
+            return scoreB - scoreA;
+        });
+        res.json({ success: true, decks });
+    } catch (error) {
+        console.error('Error obteniendo comunidad:', error);
+        res.status(500).json({ error: 'Error del servidor.' });
+    }
+});
+
+// Votar un mazo
+apiRouter.post(`/api/decks/:id/vote`, authenticateToken, async (req, res) => {
+    const { voteType } = req.body;
+    const deckId = req.params.id;
+    const email = req.user.email;
+    
+    try {
+        const db = await connectToDatabaseWrapper();
+        const { ObjectId } = require('mongodb');
+        
+        let objId;
+        try { objId = new ObjectId(deckId); } catch(e) { return res.status(400).json({error: 'ID inválido'}); }
+        
+        const deck = await db.collection('decks').findOne({ _id: objId });
+        if (!deck) return res.status(404).json({ error: 'Mazo no encontrado.' });
+
+        let upvotes = deck.upvotes || [];
+        let downvotes = deck.downvotes || [];
+
+        upvotes = upvotes.filter(u => u !== email);
+        downvotes = downvotes.filter(u => u !== email);
+
+        if (voteType === 'up') upvotes.push(email);
+        if (voteType === 'down') downvotes.push(email);
+
+        await db.collection('decks').updateOne({ _id: objId }, {
+            $set: { upvotes, downvotes }
+        });
+
+        res.json({ success: true, upvotes, downvotes });
+    } catch (error) {
+        console.error('Error votando:', error);
+        res.status(500).json({ error: 'Error del servidor.' });
     }
 });
 
