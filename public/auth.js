@@ -53,8 +53,13 @@ class AuthSystem {
 
     async verifySession() {
         try {
+            const token = localStorage.getItem('fsc_token');
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const response = await fetch(`${window.API_URL}/me`, {
                 method: 'GET',
+                headers,
                 credentials: 'include'
             });
             if (response.ok) {
@@ -97,6 +102,8 @@ class AuthSystem {
 
             const data = await response.json();
             if (response.ok) {
+                if (data.token) localStorage.setItem('fsc_token', data.token);
+                this.user = data.user;
                 this.unlockApp(data.user);
             } else {
                 this.showError(data.error || 'Fallo el inicio de sesión.');
@@ -125,6 +132,8 @@ class AuthSystem {
 
             const data = await response.json();
             if (response.ok) {
+                if (data.token) localStorage.setItem('fsc_token', data.token);
+                this.user = data.user;
                 this.unlockApp(data.user);
             } else {
                 this.showError(data.error || 'Fallo el registro.');
