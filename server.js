@@ -8,6 +8,7 @@ const { connectToDatabase, closeConnection } = require('./db');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const BASE_PATH = process.env.BASE_PATH || '/shokyuucards';
 const PORT = process.env.PORT || 7500;
 const JWT_SECRET = process.env.JWT_SECRET || 'arte_digital_data_jwt_secret_2024_secure'; // Sincronizado con Ecosistema FSC
@@ -43,6 +44,39 @@ app.use(cors({
 
 let db = null;
 
+// Fallback in-memory para desarrollo local si falla MongoDB
+const mockDB = {
+    users: [],
+    collection: function(name) {
+        if (name === 'users') {
+            return {
+                findOne: async (query) => {
+                    const keys = Object.keys(query);
+                    if (keys.includes('$or')) {
+                        return this.users.find(u => 
+                            u.username === query.$or[0].username || 
+                            u.email === query.$or[1].email
+                        ) || null;
+                    }
+                    if (query.username) return this.users.find(u => u.username === query.username) || null;
+                    if (query.email) return this.users.find(u => u.email === query.email) || null;
+                    return null;
+                },
+                insertOne: async (doc) => {
+                    this.users.push({...doc, _id: 'mock-id-' + Date.now()});
+                    return { insertedId: 'mock-id-' + Date.now() };
+                }
+            };
+        }
+        // Mock fallback generico para otras colecciones
+        return {
+            findOne: async () => null,
+            find: () => ({ toArray: async () => [] }),
+            insertOne: async () => ({ insertedId: 'mock-id-12345' })
+        };
+    }
+};
+
 // Función para conectar a la base de datos
 async function connectToDatabaseWrapper() {
     if (db) return db;
@@ -53,8 +87,8 @@ async function connectToDatabaseWrapper() {
         console.log('✅ Conexión exitosa a MongoDB');
         return db;
     } catch (error) {
-        console.error('❌ Error detallado al conectar a MongoDB:', error);
-        throw error;
+        console.warn('⚠️ [DB ADVERTENCIA] No se pudo conectar a MongoDB. Usando DB en memoria para desarrollo local.');
+        return mockDB;
     }
 }
 
