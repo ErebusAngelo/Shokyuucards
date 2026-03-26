@@ -53,14 +53,14 @@ let db = null;
 // Fallback in-memory para desarrollo local si falla MongoDB
 const mockUsers = [];
 const mockDB = {
-    collection: function(name) {
+    collection: function (name) {
         if (name === 'users') {
             return {
                 findOne: async (query) => {
                     const keys = Object.keys(query);
                     if (keys.includes('$or')) {
-                        return mockUsers.find(u => 
-                            u.username === query.$or[0].username || 
+                        return mockUsers.find(u =>
+                            u.username === query.$or[0].username ||
                             u.email === query.$or[1].email
                         ) || null;
                     }
@@ -69,7 +69,7 @@ const mockDB = {
                     return null;
                 },
                 insertOne: async (doc) => {
-                    mockUsers.push({...doc, _id: 'mock-id-' + Date.now()});
+                    mockUsers.push({ ...doc, _id: 'mock-id-' + Date.now() });
                     return { insertedId: 'mock-id-' + Date.now() };
                 }
             };
@@ -151,7 +151,7 @@ apiRouter.get(`/api/health`, (req, res) => {
 
 // Estado detallado
 apiRouter.get(`/api/status`, authenticateToken, (req, res) => {
-    res.json({ 
+    res.json({
         status: 'active',
         version: '1.2.0',
         environment: NODE_ENV,
@@ -178,8 +178,8 @@ apiRouter.post(`/api/login`, async (req, res) => {
 
     try {
         const db = await connectToDatabaseWrapper();
-        const user = await db.collection('users').findOne({ 
-            $or: [{ username: username }, { email: username }] 
+        const user = await db.collection('users').findOne({
+            $or: [{ username: username }, { email: username }]
         });
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -187,17 +187,17 @@ apiRouter.post(`/api/login`, async (req, res) => {
         }
 
         const token = jwt.sign(
-            { email: user.email, username: user.username }, 
-            JWT_SECRET, 
+            { email: user.email, username: user.username },
+            JWT_SECRET,
             { expiresIn: '30d' }
         );
 
         // Galleta global opcional dependiendo de entorno local
-        const cookieOptions = { 
-            httpOnly: true, 
-            secure: NODE_ENV !== 'local', 
+        const cookieOptions = {
+            httpOnly: true,
+            secure: NODE_ENV !== 'local',
             sameSite: 'Lax',
-            maxAge: 30 * 24 * 60 * 60 * 1000 
+            maxAge: 30 * 24 * 60 * 60 * 1000
         };
         if (NODE_ENV !== 'local') {
             cookieOptions.domain = '.fullscreencode.com';
@@ -219,7 +219,7 @@ apiRouter.post(`/api/register`, async (req, res) => {
 
     try {
         const db = await connectToDatabaseWrapper();
-        
+
         // Verificar si ya existe
         const existing = await db.collection('users').findOne({ $or: [{ username }, { email }] });
         if (existing) return res.status(400).json({ error: 'El usuario o email ya están registrados.' });
@@ -236,16 +236,16 @@ apiRouter.post(`/api/register`, async (req, res) => {
         await db.collection('users').insertOne(newUser);
 
         const token = jwt.sign(
-            { email: newUser.email, username: newUser.username }, 
-            JWT_SECRET, 
+            { email: newUser.email, username: newUser.username },
+            JWT_SECRET,
             { expiresIn: '30d' }
         );
 
-        const cookieOptions = { 
-            httpOnly: true, 
-            secure: NODE_ENV !== 'local', 
+        const cookieOptions = {
+            httpOnly: true,
+            secure: NODE_ENV !== 'local',
             sameSite: 'Lax',
-            maxAge: 30 * 24 * 60 * 60 * 1000 
+            maxAge: 30 * 24 * 60 * 60 * 1000
         };
         if (NODE_ENV !== 'local') {
             cookieOptions.domain = '.fullscreencode.com';
@@ -290,7 +290,7 @@ apiRouter.get(`/api/admin/users`, authenticateToken, async (req, res) => {
             .find({}, { projection: { password: 0 } })
             .sort({ createdAt: -1 })
             .toArray();
-        
+
         res.json({ users });
     } catch (error) {
         console.error('Error obteniendo usuarios:', error);
@@ -310,10 +310,10 @@ apiRouter.post(`/api/decks/publish`, authenticateToken, async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const existing = await db.collection('decks').findOne({ name, creatorEmail: req.user.email });
-        
+
         if (existing) {
             await db.collection('decks').updateOne(
-                { _id: existing._id }, 
+                { _id: existing._id },
                 { $set: { cards, updatedAt: new Date() } }
             );
             return res.json({ success: true, message: 'Mazo actualizado en la comunidad.' });
@@ -358,14 +358,14 @@ apiRouter.post(`/api/decks/:id/vote`, authenticateToken, async (req, res) => {
     const { voteType } = req.body;
     const deckId = req.params.id;
     const email = req.user.email;
-    
+
     try {
         const db = await connectToDatabaseWrapper();
         const { ObjectId } = require('mongodb');
-        
+
         let objId;
-        try { objId = new ObjectId(deckId); } catch(e) { return res.status(400).json({error: 'ID inválido'}); }
-        
+        try { objId = new ObjectId(deckId); } catch (e) { return res.status(400).json({ error: 'ID inválido' }); }
+
         const deck = await db.collection('decks').findOne({ _id: objId });
         if (!deck) return res.status(404).json({ error: 'Mazo no encontrado.' });
 
@@ -399,10 +399,10 @@ apiRouter.delete(`/api/decks/:id`, authenticateToken, async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const { ObjectId } = require('mongodb');
-        
+
         let objId;
-        try { objId = new ObjectId(deckId); } catch(e) { return res.status(400).json({error: 'ID inválido'}); }
-        
+        try { objId = new ObjectId(deckId); } catch (e) { return res.status(400).json({ error: 'ID inválido' }); }
+
         const result = await db.collection('decks').deleteOne({ _id: objId });
         if (result.deletedCount === 0) {
             return res.status(404).json({ error: 'Mazo no encontrado.' });
@@ -444,7 +444,7 @@ async function startServer() {
         } catch (dbError) {
             console.error('⚠️ [DB ADVERTENCIA] No se pudo conectar a MongoDB. El servidor funcionará en modo limitado (sin persistencia).');
         }
-        
+
         http.listen(PORT, () => {
             console.log('\n🚀 ===== SERVIDOR SHOKYUU CARDS (FSC) INICIADO =====');
             console.log(`📍 Entorno: ${NODE_ENV}`);
@@ -456,7 +456,7 @@ async function startServer() {
 
         process.on('SIGINT', async () => {
             console.log('\n🛑 Cerrando servidor...');
-            try { await closeConnection(); } catch (e) {}
+            try { await closeConnection(); } catch (e) { }
             process.exit(0);
         });
 

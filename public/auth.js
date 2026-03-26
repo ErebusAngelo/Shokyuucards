@@ -9,14 +9,14 @@ class AuthSystem {
         this.registerForm = document.getElementById('registerForm');
         this.mainApp = document.getElementById('mainApp');
         this.errorMsg = document.getElementById('authError');
-        
+
         this.user = null;
         this.init();
     }
 
     async init() {
         if (!this.container) return;
-        
+
         this.container.style.display = 'flex';
         this.container.style.opacity = '1';
 
