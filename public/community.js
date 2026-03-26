@@ -63,6 +63,9 @@ class CommunityManager {
             const cardCount = deck.cards ? deck.cards.length : 0;
             const hasUpvoted = upvotes.includes(currentEmail);
             const hasDownvoted = downvotes.includes(currentEmail);
+            
+            const isAdmin = window.authSystem?.user?.username === 'Adim';
+            const adminButton = isAdmin ? `<button class="btn-delete" style="background-color: #ff4d4d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-left: auto; font-family: inherit; font-size: 0.9em; box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);" onclick="window.communityManager.deleteDeck('${deck._id}')">🗑 Eliminar</button>` : '';
 
             return `
             <div class="deck-card community-deck-card">
@@ -81,6 +84,7 @@ class CommunityManager {
                 </div>
                 <button class="btn-download" onclick="window.communityManager.downloadDeck('${deck._id}')">💾 Importar</button>
               </div>
+              ${isAdmin ? `<div style="display: flex; justify-content: flex-end; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">${adminButton}</div>` : ''}
             </div>`;
         }).join('');
     }
@@ -106,9 +110,13 @@ class CommunityManager {
         if (!confirmPublish) return;
 
         try {
+            const token = localStorage.getItem('fsc_token');
             const res = await fetch(`${window.API_URL}/decks/publish`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 credentials: 'include',
                 body: JSON.stringify({ name: localDeckName, cards })
             });
@@ -135,9 +143,13 @@ class CommunityManager {
         }
 
         try {
+            const token = localStorage.getItem('fsc_token');
             const res = await fetch(`${window.API_URL}/decks/${deckId}/vote`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 credentials: 'include',
                 body: JSON.stringify({ voteType: type })
             });
@@ -156,6 +168,33 @@ class CommunityManager {
             }
         } catch (error) {
             console.error('Vote error:', error);
+        }
+    }
+
+    async deleteDeck(deckId) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este mazo de la comunidad permanentemente?')) return;
+
+        try {
+            const token = localStorage.getItem('fsc_token');
+            const res = await fetch(`${window.API_URL}/decks/${deckId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                credentials: 'include'
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('Mazo eliminado de la comunidad con éxito.');
+                this.loadCommunityDecks();
+            } else {
+                alert(data.error || 'Error al eliminar mazo.');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error de conexión.');
         }
     }
 

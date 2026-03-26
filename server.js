@@ -389,6 +389,32 @@ apiRouter.post(`/api/decks/:id/vote`, authenticateToken, async (req, res) => {
     }
 });
 
+// Eliminar un mazo (Solo Admin)
+apiRouter.delete(`/api/decks/:id`, authenticateToken, async (req, res) => {
+    if (req.user.username !== 'Adim') {
+        return res.status(403).json({ error: 'Prohibido. Solo Adim puede eliminar mazos.' });
+    }
+
+    const deckId = req.params.id;
+    try {
+        const db = await connectToDatabaseWrapper();
+        const { ObjectId } = require('mongodb');
+        
+        let objId;
+        try { objId = new ObjectId(deckId); } catch(e) { return res.status(400).json({error: 'ID inválido'}); }
+        
+        const result = await db.collection('decks').deleteOne({ _id: objId });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Mazo no encontrado.' });
+        }
+
+        res.json({ success: true, message: 'Mazo eliminado.' });
+    } catch (error) {
+        console.error('Error eliminando mazo:', error);
+        res.status(500).json({ error: 'Error del servidor.' });
+    }
+});
+
 // Registrar routers para evadir NGINX strip behavior
 app.use(BASE_PATH, apiRouter);
 app.use('/', apiRouter);
