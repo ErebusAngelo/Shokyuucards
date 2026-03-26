@@ -32,13 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 // Configuración de CORS Profesional según Manual FSC
 app.use(cors({
     origin: [
-        "https://fullscreencode.com", 
+        "https://fullscreencode.com",
+        "https://www.fullscreencode.com",
         "https://vps-4455523-x.dattaweb.com",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:7500",
         "http://localhost:5501",
-        "http://127.0.0.1:5501"
+        "http://127.0.0.1:5501",
+        "http://localhost",
+        "http://127.0.0.1"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
