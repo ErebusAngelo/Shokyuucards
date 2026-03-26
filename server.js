@@ -41,7 +41,8 @@ app.use(cors({
         "http://127.0.0.1:5501"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    credentials: true // INDISPENSABLE para leer las cookies de fscauth
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true // INDISPENSABLE para leer las cookies de fscauth y Bearer
 }));
 
 let db = null;
