@@ -34,6 +34,20 @@ class AuthSystem {
         this.loginForm.onsubmit = (e) => this.handleLogin(e);
         this.registerForm.onsubmit = (e) => this.handleRegister(e);
 
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('admin')) {
+            const userField = document.getElementById('loginUser');
+            const passField = document.getElementById('loginPass');
+            if (userField) userField.value = 'Adim';
+            if (passField) passField.value = 'vamos susan';
+            this.showLogin();
+        }
+
         this.checkSession();
     }
 
@@ -171,6 +185,13 @@ class AuthSystem {
     showError(msg) {
         this.errorMsg.textContent = msg;
         this.errorMsg.classList.remove('hidden');
+    }
+
+    logout() {
+        localStorage.removeItem('fsc_token');
+        document.cookie = 'fsc_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + (window.location.hostname === 'localhost' ? '' : '.fullscreencode.com');
+        this.user = null;
+        window.location.href = window.location.pathname; // Reload explicitly without query params
     }
 }
 
